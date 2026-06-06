@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AutoServis Finder</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Nunito:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f13;
+      --card: #1a1a24;
+      --card2: #22222f;
+      --accent: #f5a623;
+      --accent2: #ff6b35;
+      --green: #2ecc71;
+      --red: #e74c3c;
+      --text: #f0f0f5;
+      --muted: #888899;
+      --border: #2a2a3a;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      background: linear-gradient(135deg, #1a1a24, #0f0f13);
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .logo {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 15px; font-weight: 700;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .user-icon {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--card2); border: 2px solid var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; cursor: pointer;
+    }
+
+    .search-bar {
+      display: flex; gap: 10px;
+    }
+    .search-input {
+      flex: 1; padding: 10px 16px;
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text); font-family: 'Nunito', sans-serif;
+      font-size: 14px; outline: none; transition: border-color .2s;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--muted); }
+    .gps-btn {
+      width: 42px; height: 42px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; font-size: 18px; flex-shrink: 0;
+    }
+
+    /* ===== TABS ===== */
+    .tabs {
+      display: flex; gap: 8px; padding: 14px 20px 0;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      padding: 8px 16px; border-radius: 20px; font-size: 13px;
+      font-weight: 600; cursor: pointer; white-space: nowrap;
+      border: 1px solid var(--border); background: var(--card);
+      color: var(--muted); transition: all .2s;
+    }
+    .tab.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #0f0f13; border-color: transparent;
+    }
+
+    /* ===== NAV ===== */
+    .nav {
+      display: flex; border-bottom: 1px solid var(--border);
+      padding: 0 20px; margin-top: 10px;
+    }
+    .nav-btn {
+      padding: 10px 0; margin-right: 24px; font-size: 13px; font-weight: 600;
+      color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all .2s;
+    }
+    .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ===== MAIN CONTENT ===== */
+    .content { padding: 16px 20px 90px; }
+
+    /* ===== STATS BAR ===== */
+    .stats-bar {
+      display: flex; gap: 10px; margin-bottom: 16px;
+    }
+    .stat-chip {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px 14px; font-size: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .stat-chip span { color: var(--accent); font-weight: 700; }
+
+    /* ===== USTAXONA CARD ===== */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 14px;
+      overflow: hidden; transition: transform .2s, border-color .2s;
+    }
+    .card:active { transform: scale(0.98); }
+    .card.featured { border-color: var(--accent); }
+
+    .card-img-wrap { position: relative; height: 130px; overflow: hidden; }
+    .card-img {
+      width: 100%; height: 100%; object-fit: cover;
+      background: var(--card2);
+    }
+    .card-img-placeholder {
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, #1e1e2e, #2a1a3e);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px;
+    }
+    .badge-open {
+      position: absolute; top: 10px; right: 10px;
+      padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    }
+    .badge-open.open { background: rgba(46,204,113,.2); color: var(--green); border: 1px solid var(--green); }
+    .badge-open.closed { background: rgba(231,76,60,.2); color: var(--red); border: 1px solid var(--red); }
+    .badge-featured {
+      position: absolute; top: 10px; left: 10px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      color: #0f0f13; padding: 4px 10px; border-radius: 20px;
+      font-size: 10px; font-weight: 700;
+    }
+
+    .card-body { padding: 14px 16px; }
+    .card-name {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 14px; font-weight: 600; margin-bottom: 6px;
+    }
+    .card-address {
+      color: var(--muted); font-size: 12px; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .card-meta {
+      display: flex; gap: 12px; align-items: center; margin-bottom: 12px;
+    }
+    .rating { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+    .rating .star { color: var(--accent); }
+    .rating .count { color: var(--muted); font-size: 11px; }
+    .distance { font-size: 12px; color: var(--muted); }
+    .price { font-size: 12px; color: var(--accent); font-weight: 600; }
+
+    .xizmatlar-list {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    .xizmat-tag {
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 4px 10px; font-size: 11px; color: var(--muted);
+    }
+
+    .card-actions { display: flex; gap: 8px; }
+    .btn {
+      flex: 1; padding: 10px; border-radius: 10px; border: none;
+      cursor: pointer; font-family: 'Nunito', sans-serif;
+      font-weight: 700; font-size: 13px; transition: all .2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #0f0f13;
+    }
+    .btn-outline {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn:active { transform: scale(0.97); }
+
+    /* ===== DETAIL VIEW ===== */
+    .detail-view {
+      display: none; position: fixed; inset: 0;
+      background: var(--bg); z-index: 200; overflow-y: auto;
+    }
+    .detail-view.show { display: block; animation: slideUp .3s ease; }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .detail-header {
+      position: sticky; top: 0; z-index: 10;
+      background: var(--bg); padding: 14px 20px;
+      display: flex; align-items: center; gap: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .back-btn {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--card); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 18px;
+    }
+    .detail-title {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 14px; font-weight: 600;
+    }
+    .detail-img {
+      width: 100%; height: 200px;
+      background: linear-gradient(135deg, #1e1e2e, #2a1a3e);
+      display: flex; align-items: center; justify-content: center; font-size: 60px;
+    }
+    .detail-body { padding: 20px; }
+    .detail-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: var(--card); display: flex; align-items: center;
+      justify-content: center; font-size: 18px; flex-shrink: 0;
+    }
+    .detail-row-text p:first-child { font-size: 13px; font-weight: 600; }
+    .detail-row-text p:last-child { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .section-title {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 13px; color: var(--muted); margin: 20px 0 12px;
+    }
+    .xizmat-row {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .xizmat-name { font-size: 13px; font-weight: 600; }
+    .xizmat-price { color: var(--accent); font-weight: 700; font-size: 13px; }
+
+    /* ===== BRON VIEW ===== */
+    .bron-view {
+      display: none; position: fixed; inset: 0;
+      background: var(--bg); z-index: 300; overflow-y: auto;
+    }
+    .bron-view.show { display: block; animation: slideUp .3s ease; }
+    .bron-body { padding: 20px; }
+    .bron-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+    .bron-input {
+      width: 100%; padding: 12px 16px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text);
+      font-family: 'Nunito', sans-serif; font-size: 14px; outline: none;
+      margin-bottom: 16px; transition: border-color .2s;
+    }
+    .bron-input:focus { border-color: var(--accent); }
+
+    .time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+    .time-chip {
+      padding: 10px 6px; text-align: center; border-radius: 10px;
+      background: var(--card); border: 1px solid var(--border);
+      font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s;
+    }
+    .time-chip.selected {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #0f0f13; border-color: transparent;
+    }
+    .time-chip.disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ===== PROFIL / PANEL ===== */
+    .profile-section {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 14px;
+    }
+    .profile-avatar {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; margin: 0 auto 12px;
+    }
+    .profile-name {
+      text-align: center; font-family: 'Unbounded', sans-serif;
+      font-size: 15px; font-weight: 600; margin-bottom: 4px;
+    }
+    .profile-sub { text-align: center; color: var(--muted); font-size: 12px; }
+
+    .menu-item {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 10px; cursor: pointer; transition: border-color .2s;
+    }
+    .menu-item:active { border-color: var(--accent); }
+    .menu-icon { font-size: 20px; width: 32px; text-align: center; }
+    .menu-text { flex: 1; }
+    .menu-text p:first-child { font-size: 14px; font-weight: 600; }
+    .menu-text p:last-child { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .menu-arrow { color: var(--muted); font-size: 18px; }
+
+    /* Stat cards */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; text-align: center;
+    }
+    .stat-card .num {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 24px; font-weight: 700;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-card p { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    /* ===== BOTTOM NAV ===== */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--card); border-top: 1px solid var(--border);
+      display: flex; padding: 8px 0 12px; z-index: 50;
+    }
+    .bnav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 4px; cursor: pointer; padding: 4px 0;
+      transition: all .2s;
+    }
+    .bnav-icon { font-size: 22px; transition: transform .2s; }
+    .bnav-label { font-size: 10px; color: var(--muted); font-weight: 600; }
+    .bnav-item.active .bnav-icon { transform: scale(1.15); }
+    .bnav-item.active .bnav-label { color: var(--accent); }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: var(--green); color: white; padding: 12px 24px;
+      border-radius: 20px; font-weight: 700; font-size: 14px;
+      z-index: 999; opacity: 0; transition: opacity .3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ===== PAGE SECTIONS ===== */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* Loading */
+    .loading {
+      text-align: center; padding: 40px 20px; color: var(--muted);
+    }
+    .spinner {
+      width: 36px; height: 36px; border: 3px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo">🔧 AutoServis Finder</div>
+    <div class="user-icon" onclick="switchPage('profil')" id="userIcon">👤</div>
+  </div>
+  <div class="search-bar">
+    <input class="search-input" type="text" placeholder="Xizmat yoki ustaxona qidiring..." id="searchInput" oninput="qidirish()" />
+    <button class="gps-btn" onclick="gpsQidirish()" title="Yaqin atrofdan topish">📍</button>
+  </div>
+</div>
+
+<!-- ===== TABS ===== -->
+<div class="tabs" id="tabsWrap">
+  <div class="tab active" onclick="filterTab(this, 'barchasi')">Barchasi</div>
+  <div class="tab" onclick="filterTab(this, 'Moy almashtirish')">🔧 Moy</div>
+  <div class="tab" onclick="filterTab(this, 'Kuzov')">🚗 Kuzov</div>
+  <div class="tab" onclick="filterTab(this, 'Shina')">🔄 Shina</div>
+  <div class="tab" onclick="filterTab(this, 'Diagnostika')">🔍 Diagnostika</div>
+  <div class="tab" onclick="filterTab(this, 'Dvigatel')">⚙️ Dvigatel</div>
+</div>
+
+<!-- ===== NAV ===== -->
+<div class="nav" id="mainNav">
+  <div class="nav-btn active" onclick="switchPage('asosiy')">Ro'yxat</div>
+  <div class="nav-btn" onclick="switchPage('panel')">🏪 Ustaxona paneli</div>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="content">
+
+  <!-- ASOSIY SAHIFA -->
+  <div class="page active" id="page-asosiy">
+    <div class="stats-bar">
+      <div class="stat-chip">🏪 <span id="topildi-soni">0</span> ustaxona</div>
+      <div class="stat-chip">📍 Yaqin atrofda</div>
+    </div>
+    <div id="ustaxonalar-list">
+      <div class="loading"><div class="spinner"></div><p>Ustaxonalar yuklanmoqda...</p></div>
+    </div>
+  </div>
+
+  <!-- PROFIL SAHIFASI -->
+  <div class="page" id="page-profil">
+    <div class="profile-section">
+      <div class="profile-avatar" id="profileAvatar">👤</div>
+      <div class="profile-name" id="profileName">Foydalanuvchi</div>
+      <div class="profile-sub" id="profileSub">Telegram orqali ulangan</div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="num" id="bronSoni">0</div><p>Jami bronlar</p></div>
+      <div class="stat-card"><div class="num" id="sharxSoni">0</div><p>Sharhlar</p></div>
+    </div>
+    <div class="menu-item" onclick="switchPage('bronlarim')">
+      <div class="menu-icon">📅</div>
+      <div class="menu-text"><p>Bronlarim</p><p>Barcha bronlar tarixi</p></div>
+      <div class="menu-arrow">›</div>
+    </div>
+    <div class="menu-item">
+      <div class="menu-icon">⭐</div>
+      <div class="menu-text"><p>Sevimlilar</p><p>Saqlangan ustaxonalar</p></div>
+      <div class="menu-arrow">›</div>
+    </div>
+    <div class="menu-item">
+      <div class="menu-icon">🔔</div>
+      <div class="menu-text"><p>Bildirishnomalar</p><p>Sozlamalar</p></div>
+      <div class="menu-arrow">›</div>
+    </div>
+  </div>
+
+  <!-- BRONLARIM SAHIFASI -->
+  <div class="page" id="page-bronlarim">
+    <div id="bronlar-list">
+      <div class="loading" style="color:var(--muted);text-align:center;padding:40px 0">
+        <p style="font-size:36px;margin-bottom:12px">📅</p>
+        <p>Hozircha bronlar yo'q</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL SAHIFASI (Ustaxona egasi) -->
+  <div class="page" id="page-panel">
+    <div class="profile-section">
+      <div class="profile-avatar">🏪</div>
+      <div class="profile-name">Mening Ustaxonam</div>
+      <div class="profile-sub">Ustaxona egasi paneli</div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="num">12</div><p>Bugungi tashriflar</p></div>
+      <div class="stat-card"><div class="num">4</div><p>Yangi bronlar</p></div>
+      <div class="stat-card"><div class="num">4.7⭐</div><p>O'rtacha reyting</p></div>
+      <div class="stat-card"><div class="num">89</div><p>Jami sharhlar</p></div>
+    </div>
+    <p class="section-title">KIRUVCHI BRONLAR</p>
+    <div id="panel-bronlar">
+      <div class="card" style="padding:0">
+        <div class="card-body">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <p style="font-weight:700;font-size:14px">Alisher T.</p>
+              <p style="color:var(--muted);font-size:12px;margin-top:3px">Moy almashtirish • Bugun 14:00</p>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-primary" style="flex:none;padding:8px 14px;font-size:12px" onclick="bronQabul(this)">✓</button>
+              <button class="btn btn-outline" style="flex:none;padding:8px 14px;font-size:12px" onclick="bronRad(this)">✗</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:0">
+        <div class="card-body">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <p style="font-weight:700;font-size:14px">Jasur M.</p>
+              <p style="color:var(--muted);font-size:12px;margin-top:3px">Tormoz tizimi • Ertaga 10:00</p>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-primary" style="flex:none;padding:8px 14px;font-size:12px" onclick="bronQabul(this)">✓</button>
+              <button class="btn btn-outline" style="flex:none;padding:8px 14px;font-size:12px" onclick="bronRad(this)">✗</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== BOTTOM NAV ===== -->
+<div class="bottom-nav">
+  <div class="bnav-item active" onclick="switchPage('asosiy')" id="bnav-asosiy">
+    <div class="bnav-icon">🔍</div>
+    <div class="bnav-label">Qidirish</div>
+  </div>
+  <div class="bnav-item" onclick="switchPage('bronlarim')" id="bnav-bronlarim">
+    <div class="bnav-icon">📅</div>
+    <div class="bnav-label">Bronlarim</div>
+  </div>
+  <div class="bnav-item" onclick="switchPage('panel')" id="bnav-panel">
+    <div class="bnav-icon">🏪</div>
+    <div class="bnav-label">Panel</div>
+  </div>
+  <div class="bnav-item" onclick="switchPage('profil')" id="bnav-profil">
+    <div class="bnav-icon">👤</div>
+    <div class="bnav-label">Profil</div>
+  </div>
+</div>
+
+<!-- ===== DETAIL VIEW ===== -->
+<div class="detail-view" id="detailView">
+  <div class="detail-header">
+    <div class="back-btn" onclick="detailYop()">←</div>
+    <div class="detail-title" id="detailTitle">Ustaxona</div>
+  </div>
+  <div class="detail-img" id="detailImg">🔧</div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+<!-- ===== BRON VIEW ===== -->
+<div class="bron-view" id="bronView">
+  <div class="detail-header">
+    <div class="back-btn" onclick="bronYop()">←</div>
+    <div class="detail-title">Bron qilish</div>
+  </div>
+  <div class="bron-body">
+    <div class="bron-label">USTAXONA</div>
+    <div class="card" style="padding:0;margin-bottom:16px">
+      <div class="card-body" id="bronUstaxona"></div>
+    </div>
+
+    <div class="bron-label">XIZMAT TANLANG</div>
+    <select class="bron-input" id="bronXizmat">
+      <option value="">Xizmat tanlang...</option>
+    </select>
+
+    <div class="bron-label">SANA TANLANG</div>
+    <input class="bron-input" type="date" id="bronSana" />
+
+    <div class="bron-label">VAQT TANLANG</div>
+    <div class="time-grid" id="vaqtlar">
+      <div class="time-chip selected" onclick="vaqtTanla(this)">08:00</div>
+      <div class="time-chip" onclick="vaqtTanla(this)">09:00</div>
+      <div class="time-chip" onclick="vaqtTanla(this)">10:00</div>
+      <div class="time-chip" onclick="vaqtTanla(this)">11:00</div>
+      <div class="time-chip disabled">12:00</div>
+      <div class="time-chip" onclick="vaqtTanla(this)">13:00</div>
+      <div class="time-chip" onclick="vaqtTanla(this)">14:00</div>
+      <div class="time-chip" onclick="vaqtTanla(this)">15:00</div>
+      <div class="time-chip" onclick="vaqtTanla(this)">16:00</div>
+      <div class="time-chip" onclick="vaqtTanla(this)">17:00</div>
+      <div class="time-chip" onclick="vaqtTanla(this)">18:00</div>
+      <div class="time-chip disabled">19:00</div>
+    </div>
+
+    <div class="bron-label">IZOH (ixtiyoriy)</div>
+    <textarea class="bron-input" id="bronIzoh" rows="3" placeholder="Masalan: Chevrolet Nexia, 2020 yil..."></textarea>
+
+    <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="bronYuborish()">
+      ✅ Bronni tasdiqlash
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// =============================================
+// SOZLAMALAR
+// =============================================
+// API URLini bu yerga yozing (Railway yoki Render dan olgandan keyin):
+const API_URL = "http://localhost:8000";
+
+// =============================================
+// TELEGRAM WEBAPP
+// =============================================
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.expand();
+  tg.setHeaderColor('#0f0f13');
+  tg.setBackgroundColor('#0f0f13');
+  const user = tg.initDataUnsafe?.user;
+  if (user) {
+    document.getElementById('profileName').textContent = `${user.first_name} ${user.last_name || ''}`.trim();
+    document.getElementById('profileSub').textContent = `@${user.username || 'telegram_foydalanuvchi'}`;
+    document.getElementById('userIcon').textContent = user.first_name[0];
+    document.getElementById('profileAvatar').textContent = user.first_name[0];
+  }
+}
+
+// =============================================
+// MA'LUMOTLAR
+// =============================================
+let barcha_ustaxonalar = [];
+let joriy_ustaxona = null;
+let tanlangan_vaqt = "08:00";
+let bronlar_list = [];
+
+// =============================================
+// YUKLASH
+// =============================================
+async function ustaxonalarYukla(lat = 41.2995, lng = 69.2401) {
+  try {
+    const res = await fetch(`${API_URL}/ustaxonalar?lat=${lat}&lng=${lng}`);
+    if (!res.ok) throw new Error();
+    barcha_ustaxonalar = await res.json();
+  } catch {
+    // API ulana olmasa namunaviy ma'lumot ishlatamiz
+    barcha_ustaxonalar = [
+      { id:1, nomi:"Sherzod Auto Servis", manzil:"Yunusobod, 5-mavze", telefon:"+998901234567",
+        reyting:4.8, sharhlar_soni:124, masofa_km:0.8, xizmatlar:["Moy almashtirish","Tormoz tizimi","Dvigatel ta'miri"],
+        narx_dan:50000, ochiq:true, ish_vaqti:"08:00-20:00" },
+      { id:2, nomi:"Master Auto", manzil:"Chilonzor, 9-kvartal", telefon:"+998907654321",
+        reyting:4.5, sharhlar_soni:89, masofa_km:2.1, xizmatlar:["Kuzov ta'miri","Bo'yash","Elektr tizimi"],
+        narx_dan:80000, ochiq:true, ish_vaqti:"09:00-19:00" },
+      { id:3, nomi:"Speed Service", manzil:"Mirzo Ulug'bek, 3-mavze", telefon:"+998991112233",
+        reyting:4.2, sharhlar_soni:56, masofa_km:3.5, xizmatlar:["Shina almashtirish","Diagnostika"],
+        narx_dan:30000, ochiq:false, ish_vaqti:"08:00-22:00" },
+    ];
+  }
+  kartalarnKorsatish(barcha_ustaxonalar);
+}
+
+function kartalarnKorsatish(ustaxonalar) {
+  const list = document.getElementById('ustaxonalar-list');
+  document.getElementById('topildi-soni').textContent = ustaxonalar.length;
+
+  if (!ustaxonalar.length) {
+    list.innerHTML = `<div class="loading"><p style="font-size:40px;margin-bottom:12px">🔍</p><p>Ustaxona topilmadi</p></div>`;
+    return;
+  }
+
+  list.innerHTML = ustaxonalar.map((u, i) => `
+    <div class="card ${i === 0 ? 'featured' : ''}" onclick="ustaxonaDetailOch(${u.id})">
+      <div class="card-img-wrap">
+        <div class="card-img-placeholder">${['🔧','🚗','⚙️','🔩'][i % 4]}</div>
+        ${i === 0 ? '<div class="badge-featured">⭐ TOP</div>' : ''}
+        <div class="badge-open ${u.ochiq ? 'open' : 'closed'}">${u.ochiq ? '● Ochiq' : '● Yopiq'}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-name">${u.nomi}</div>
+        <div class="card-address">📍 ${u.manzil}</div>
+        <div class="card-meta">
+          <div class="rating"><span class="star">★</span> ${u.reyting} <span class="count">(${u.sharhlar_soni})</span></div>
+          <div class="distance">📏 ${u.masofa_km || '—'} km</div>
+          <div class="price">dan ${(u.narx_dan || 0).toLocaleString()} so'm</div>
+        </div>
+        <div class="xizmatlar-list">
+          ${u.xizmatlar.slice(0,3).map(x => `<span class="xizmat-tag">${x}</span>`).join('')}
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="event.stopPropagation(); bronOch(${u.id})">📅 Bron qilish</button>
+          <button class="btn btn-outline" onclick="event.stopPropagation(); qongiroq('${u.telefon}')">📞 Qo'ng'iroq</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// =============================================
+// DETAIL
+// =============================================
+function ustaxonaDetailOch(id) {
+  const u = barcha_ustaxonalar.find(x => x.id === id);
+  if (!u) return;
+  joriy_ustaxona = u;
+  document.getElementById('detailTitle').textContent = u.nomi;
+  document.getElementById('detailImg').textContent = ['🔧','🚗','⚙️','🔩'][id % 4];
+
+  document.getElementById('detailBody').innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <div style="flex:1;background:var(--card);border-radius:12px;padding:12px;text-align:center">
+        <div style="color:var(--accent);font-size:20px;font-weight:700">★ ${u.reyting}</div>
+        <div style="color:var(--muted);font-size:11px;margin-top:3px">${u.sharhlar_soni} sharh</div>
+      </div>
+      <div style="flex:1;background:var(--card);border-radius:12px;padding:12px;text-align:center">
+        <div style="color:var(--accent);font-size:13px;font-weight:700">${u.ochiq ? '✅ Ochiq' : '❌ Yopiq'}</div>
+        <div style="color:var(--muted);font-size:11px;margin-top:3px">${u.ish_vaqti || '08:00-20:00'}</div>
+      </div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-icon">📍</div>
+      <div class="detail-row-text"><p>${u.manzil}</p><p>${u.masofa_km ? u.masofa_km + ' km uzoqlikda' : 'Manzil'}</p></div>
+    </div>
+    <div class="detail-row" onclick="qongiroq('${u.telefon}')" style="cursor:pointer">
+      <div class="detail-icon">📞</div>
+      <div class="detail-row-text"><p>${u.telefon}</p><p>Qo'ng'iroq qilish uchun bosing</p></div>
+    </div>
+    <div class="detail-row" onclick="xaritaOch('${u.manzil}')" style="cursor:pointer">
+      <div class="detail-icon">🗺️</div>
+      <div class="detail-row-text"><p>Yo'l ko'rsatish</div>
+      <div class="detail-row-text"><p>Xaritada ko'rish</p><p>Google Maps orqali</p></div>
+    </div>
+
+    <p class="section-title">XIZMATLAR VA NARXLAR</p>
+    ${u.xizmatlar.map(x => `
+      <div class="xizmat-row">
+        <span class="xizmat-name">🔧 ${x}</span>
+        <span class="xizmat-price">dan ${(u.narx_dan||50000).toLocaleString()} so'm</span>
+      </div>
+    `).join('')}
+
+    <div style="margin-top:20px">
+      <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="bronOch(${u.id}); detailYop()">
+        📅 Bron qilish
+      </button>
+    </div>
+  `;
+
+  document.getElementById('detailView').classList.add('show');
+}
+
+function detailYop() {
+  document.getElementById('detailView').classList.remove('show');
+}
+
+// =============================================
+// BRON
+// =============================================
+function bronOch(id) {
+  const u = barcha_ustaxonalar.find(x => x.id === id);
+  if (!u) return;
+  joriy_ustaxona = u;
+
+  document.getElementById('bronUstaxona').innerHTML = `
+    <div style="font-weight:700;font-size:14px">${u.nomi}</div>
+    <div style="color:var(--muted);font-size:12px;margin-top:3px">📍 ${u.manzil}</div>
+  `;
+
+  const select = document.getElementById('bronXizmat');
+  select.innerHTML = '<option value="">Xizmat tanlang...</option>';
+  u.xizmatlar.forEach(x => {
+    const opt = document.createElement('option');
+    opt.value = x; opt.textContent = x;
+    select.appendChild(opt);
+  });
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('bronSana').value = today;
+  document.getElementById('bronSana').min = today;
+
+  document.getElementById('bronView').classList.add('show');
+}
+
+function bronYop() {
+  document.getElementById('bronView').classList.remove('show');
+}
+
+function vaqtTanla(el) {
+  if (el.classList.contains('disabled')) return;
+  document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  tanlangan_vaqt = el.textContent;
+}
+
+async function bronYuborish() {
+  const xizmat = document.getElementById('bronXizmat').value;
+  const sana = document.getElementById('bronSana').value;
+  const izoh = document.getElementById('bronIzoh').value;
+
+  if (!xizmat) { toast('⚠️ Xizmat tanlang!'); return; }
+  if (!sana) { toast('⚠️ Sana tanlang!'); return; }
+
+  const userId = tg?.initDataUnsafe?.user?.id || 'test_user';
+
+  try {
+    await fetch(`${API_URL}/bron`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ustaxona_id: joriy_ustaxona.id,
+        foydalanuvchi_id: String(userId),
+        sana, vaqt: tanlangan_vaqt, xizmat, izoh
+      })
+    });
+  } catch {}
+
+  bronlar_list.push({
+    ustaxona: joriy_ustaxona.nomi, xizmat, sana,
+    vaqt: tanlangan_vaqt, holat: 'kutilmoqda'
+  });
+  document.getElementById('bronSoni').textContent = bronlar_list.length;
+  bronlarniKorsatish();
+
+  bronYop();
+  toast('✅ Bron muvaffaqiyatli qabul qilindi!');
+  setTimeout(() => switchPage('bronlarim'), 1500);
+}
+
+function bronlarniKorsatish() {
+  const list = document.getElementById('bronlar-list');
+  if (!bronlar_list.length) {
+    list.innerHTML = `<div class="loading" style="color:var(--muted);text-align:center;padding:40px 0"><p style="font-size:36px;margin-bottom:12px">📅</p><p>Hozircha bronlar yo'q</p></div>`;
+    return;
+  }
+  list.innerHTML = bronlar_list.map(b => `
+    <div class="card" style="padding:0">
+      <div class="card-body">
+        <div style="font-weight:700;font-size:14px;margin-bottom:6px">${b.ustaxona}</div>
+        <div style="color:var(--muted);font-size:12px">🔧 ${b.xizmat}</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:3px">📅 ${b.sana} • ⏰ ${b.vaqt}</div>
+        <div style="margin-top:10px">
+          <span style="background:rgba(245,166,35,.15);color:var(--accent);border:1px solid var(--accent);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700">
+            ⏳ Kutilmoqda
+          </span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// =============================================
+// YORDAMCHI FUNKSIYALAR
+// =============================================
+function qongiroq(tel) {
+  window.open(`tel:${tel}`);
+}
+
+function xaritaOch(manzil) {
+  window.open(`https://maps.google.com/?q=${encodeURIComponent(manzil)}`);
+}
+
+function gpsQidirish() {
+  if (!navigator.geolocation) { toast('📍 GPS mavjud emas'); return; }
+  toast('📍 Joylashuvingiz aniqlanmoqda...');
+  navigator.geolocation.getCurrentPosition(
+    pos => ustaxonalarYukla(pos.coords.latitude, pos.coords.longitude),
+    () => toast('❌ GPS ruxsati berilmadi')
+  );
+}
+
+function qidirish() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  if (!q) { kartalarnKorsatish(barcha_ustaxonalar); return; }
+  const filterlangan = barcha_ustaxonalar.filter(u =>
+    u.nomi.toLowerCase().includes(q) ||
+    u.manzil.toLowerCase().includes(q) ||
+    u.xizmatlar.some(x => x.toLowerCase().includes(q))
+  );
+  kartalarnKorsatish(filterlangan);
+}
+
+function filterTab(el, tur) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  if (tur === 'barchasi') { kartalarnKorsatish(barcha_ustaxonalar); return; }
+  const filterlangan = barcha_ustaxonalar.filter(u =>
+    u.xizmatlar.some(x => x.includes(tur))
+  );
+  kartalarnKorsatish(filterlangan);
+}
+
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  document.getElementById(`page-${page}`).classList.add('active');
+  const bnav = document.getElementById(`bnav-${page}`);
+  if (bnav) bnav.classList.add('active');
+
+  if (page === 'bronlarim') bronlarniKorsatish();
+}
+
+function bronQabul(btn) {
+  const card = btn.closest('.card');
+  card.querySelector('.btn-primary').textContent = '✅';
+  card.querySelector('.btn-outline').remove();
+  toast('✅ Bron qabul qilindi!');
+}
+
+function bronRad(btn) {
+  btn.closest('.card').remove();
+  toast('❌ Bron rad etildi');
+}
+
+function toast(xabar) {
+  const el = document.getElementById('toast');
+  el.textContent = xabar; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// =============================================
+// ISHGA TUSHIRISH
+// =============================================
+ustaxonalarYukla();
+</script>
+</body>
+</html>
