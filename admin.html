@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Garage 24/7 — Admin Panel</title>
+<style>
+:root{
+  --bg:#080810;--bg2:#0f0f1a;--card:#111120;--card2:#181828;
+  --border:#1e1e32;--border2:#252540;
+  --fire1:#FF2200;--fire2:#FF6B00;--fire3:#FFB800;
+  --text:#f0f0fa;--muted:#55556a;--muted2:#88889a;
+  --green:#00e676;--red:#ff1744;--r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+.hdr{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+.hdr-logo{display:flex;align-items:center;gap:10px}
+.hdr-logo svg{flex-shrink:0}
+.hdr-name{font-size:18px;font-weight:900;letter-spacing:2px;color:#fff}
+.hdr-sub{font-size:9px;letter-spacing:4px;color:var(--fire2);margin-top:2px}
+.hdr-badge{background:rgba(255,107,0,.15);color:var(--fire2);border:1px solid rgba(255,107,0,.3);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:1px}
+
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center}
+.stat-box .n{font-size:28px;font-weight:900;background:linear-gradient(90deg,var(--fire2),var(--fire3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-box p{color:var(--muted2);font-size:11px;margin-top:4px;letter-spacing:1px}
+
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+/* FORM */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.panel-title{font-size:11px;letter-spacing:3px;color:var(--muted);margin-bottom:16px;font-weight:700}
+
+.form-row{margin-bottom:13px}
+.lbl{font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:6px;font-weight:600;display:block}
+.inp{width:100%;padding:10px 13px;background:var(--card2);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s;font-family:inherit}
+.inp:focus{border-color:var(--fire2)}
+.inp::placeholder{color:var(--muted)}
+.inp option{background:var(--card2)}
+
+.form-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+.xiz-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:32px}
+.xiz-chip{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--muted2);display:flex;align-items:center;gap:6px}
+.xiz-chip button{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;line-height:1}
+.xiz-add{display:flex;gap:8px}
+
+.btn-fire{background:linear-gradient(135deg,var(--fire1),var(--fire3));color:#fff;border:none;border-radius:9px;padding:11px 20px;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;transition:opacity .2s;width:100%;margin-top:6px}
+.btn-fire:active{opacity:.85}
+.btn-out{background:transparent;border:1px solid var(--border2);color:var(--muted2);border-radius:9px;padding:9px 16px;font-weight:700;font-size:12px;cursor:pointer;transition:all .2s}
+.btn-out:hover{border-color:var(--fire2);color:var(--fire2)}
+
+/* LIST */
+.ust-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;transition:border-color .2s}
+.ust-card:hover{border-color:var(--border2)}
+.ust-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.ust-name{font-size:15px;font-weight:700}
+.ust-open{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.5px}
+.ust-open.y{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.35)}
+.ust-open.n{background:rgba(255,23,68,.15);color:var(--red);border:1px solid rgba(255,23,68,.35)}
+.ust-info{color:var(--muted2);font-size:12px;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.ust-tags{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.ust-tag{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--muted2)}
+.ust-btns{display:flex;gap:6px;margin-top:10px}
+.btn-del{background:rgba(255,23,68,.1);border:1px solid rgba(255,23,68,.3);color:var(--red);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-del:hover{background:rgba(255,23,68,.2)}
+.btn-edit{background:rgba(255,107,0,.1);border:1px solid rgba(255,107,0,.3);color:var(--fire2);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-edit:hover{background:rgba(255,107,0,.2)}
+
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty p:first-child{font-size:36px;margin-bottom:10px}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;padding:10px 22px;border-radius:20px;font-weight:700;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;letter-spacing:.5px;white-space:nowrap}
+.toast.on{opacity:1}
+
+@media(max-width:700px){
+  .stats{grid-template-columns:1fr 1fr}
+  .layout{grid-template-columns:1fr}
+  .form-2,.form-3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-logo">
+    <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
+      <defs>
+        <linearGradient id="fire" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#FF2200"/>
+          <stop offset="40%" style="stop-color:#FF6B00"/>
+          <stop offset="100%" style="stop-color:#FFB800"/>
+        </linearGradient>
+        <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#FFB800"/>
+          <stop offset="100%" style="stop-color:#FF2200"/>
+        </linearGradient>
+      </defs>
+      <path d="M120,15 L210,58 L210,162 Q210,210 120,228 Q30,210 30,162 L30,58 Z" fill="none" stroke="url(#ring)" stroke-width="4"/>
+      <path d="M120,28 L197,67 L197,160 Q197,202 120,218 Q43,202 43,160 L43,67 Z" fill="#0d0d18"/>
+      <text x="120" y="175" font-family="'Arial Black',Impact,sans-serif" font-size="140" font-weight="900" text-anchor="middle" fill="url(#fire)">G</text>
+    </svg>
+    <div>
+      <div class="hdr-name">GARAGE 24/7</div>
+      <div class="hdr-sub">ADMIN PANEL</div>
+    </div>
+  </div>
+  <div class="hdr-badge">👤 ADMIN</div>
+</div>
+
+<div class="wrap">
+
+  <!-- STATISTIKA -->
+  <div class="stats">
+    <div class="stat-box"><div class="n" id="sJami">0</div><p>JAMI USTAXONA</p></div>
+    <div class="stat-box"><div class="n" id="sOchiq">0</div><p>OCHIQ</p></div>
+    <div class="stat-box"><div class="n" id="sYopiq">0</div><p>YOPIQ</p></div>
+    <div class="stat-box"><div class="n" id="sXizmat">0</div><p>JAMI XIZMAT</p></div>
+  </div>
+
+  <div class="layout">
+
+    <!-- FORMA -->
+    <div class="panel">
+      <div class="panel-title" id="formTitle">➕ YANGI USTAXONA QO'SHISH</div>
+      <input type="hidden" id="editId"/>
+
+      <div class="form-row">
+        <label class="lbl">USTAXONA NOMI *</label>
+        <input class="inp" id="fNomi" placeholder="Masalan: Sherzod Auto Servis"/>
+      </div>
+      <div class="form-row">
+        <label class="lbl">MANZIL *</label>
+        <input class="inp" id="fManzil" placeholder="Masalan: Yunusobod, 5-mavze"/>
+      </div>
+      <div class="form-2">
+        <div class="form-row">
+          <label class="lbl">TELEFON *</label>
+          <input class="inp" id="fTelefon" placeholder="+998901234567"/>
+        </div>
+        <div class="form-row">
+          <label class="lbl">NARX (so'm dan)</label>
+          <input class="inp" type="number" id="fNarx" placeholder="50000"/>
+        </div>
+      </div>
+      <div class="form-2">
+        <div class="form-row">
+          <label class="lbl">ISH VAQTI BOSHI</label>
+          <input class="inp" type="time" id="fBoshi" value="08:00"/>
+        </div>
+        <div class="form-row">
+          <label class="lbl">ISH VAQTI OXIRI</label>
+          <input class="inp" type="time" id="fOxiri" value="20:00"/>
+        </div>
+      </div>
+      <div class="form-3">
+        <div class="form-row">
+          <label class="lbl">KENGLIK (lat)</label>
+          <input class="inp" id="fLat" placeholder="41.2995"/>
+        </div>
+        <div class="form-row">
+          <label class="lbl">UZUNLIK (lng)</label>
+          <input class="inp" id="fLng" placeholder="69.2401"/>
+        </div>
+        <div class="form-row">
+          <label class="lbl">HOLAT</label>
+          <select class="inp" id="fOchiq">
+            <option value="true">✅ Ochiq</option>
+            <option value="false">❌ Yopiq</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="lbl">XIZMATLAR</label>
+        <div class="xiz-wrap" id="xizWrap"></div>
+        <div class="xiz-add">
+          <input class="inp" id="xizInp" placeholder="Xizmat nomi..." style="flex:1" onkeydown="if(event.key==='Enter')addXizmat()"/>
+          <button class="btn-out" onclick="addXizmat()">+ QO'SH</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px" id="quickXiz">
+          <button class="btn-out" style="font-size:11px;padding:5px 10px" onclick="quickAdd('Moy almashtirish')">Moy</button>
+          <button class="btn-out" style="font-size:11px;padding:5px 10px" onclick="quickAdd('Tormoz tizimi')">Tormoz</button>
+          <button class="btn-out" style="font-size:11px;padding:5px 10px" onclick="quickAdd('Kuzov ta\'miri')">Kuzov</button>
+          <button class="btn-out" style="font-size:11px;padding:5px 10px" onclick="quickAdd('Shina almashtirish')">Shina</button>
+          <button class="btn-out" style="font-size:11px;padding:5px 10px" onclick="quickAdd('Diagnostika')">Diagnostika</button>
+          <button class="btn-out" style="font-size:11px;padding:5px 10px" onclick="quickAdd('Elektr tizimi')">Elektr</button>
+          <button class="btn-out" style="font-size:11px;padding:5px 10px" onclick="quickAdd('Dvigatel ta\'miri')">Dvigatel</button>
+          <button class="btn-out" style="font-size:11px;padding:5px 10px" onclick="quickAdd('Bo\'yash')">Bo'yash</button>
+        </div>
+      </div>
+
+      <button class="btn-fire" onclick="saqlash()" id="saveBtn">✅ SAQLASH</button>
+      <button class="btn-out" onclick="tozala()" style="width:100%;margin-top:8px" id="cancelBtn">✕ BEKOR QILISH</button>
+    </div>
+
+    <!-- RO'YXAT -->
+    <div class="panel">
+      <div class="panel-title">🏪 USTAXONALAR RO'YXATI</div>
+      <div id="listEl">
+        <div class="empty"><p>🏪</p><p>Hozircha ustaxona yo'q.<br>Chapdan qo'shing!</p></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ── MA'LUMOTLAR localStorage dan yuklanadi ──
+let data = JSON.parse(localStorage.getItem('g247_ust') || '[]');
+let xizmatlar = [];
+let nextId = parseInt(localStorage.getItem('g247_id') || '1');
+
+// ── RENDER ──
+function render(){
+  localStorage.setItem('g247_ust', JSON.stringify(data));
+  localStorage.setItem('g247_id', String(nextId));
+
+  // stats
+  document.getElementById('sJami').textContent = data.length;
+  document.getElementById('sOchiq').textContent = data.filter(u=>u.ochiq).length;
+  document.getElementById('sYopiq').textContent = data.filter(u=>!u.ochiq).length;
+  document.getElementById('sXizmat').textContent = data.reduce((a,u)=>a+u.xizmatlar.length,0);
+
+  // list
+  const el = document.getElementById('listEl');
+  if(!data.length){
+    el.innerHTML=`<div class="empty"><p>🏪</p><p>Hozircha ustaxona yo'q.<br>Chapdan qo'shing!</p></div>`;
+    return;
+  }
+  el.innerHTML = data.map(u=>`
+    <div class="ust-card">
+      <div class="ust-top">
+        <div class="ust-name">${u.nomi}</div>
+        <span class="ust-open ${u.ochiq?'y':'n'}">${u.ochiq?'OCHIQ':'YOPIQ'}</span>
+      </div>
+      <div class="ust-info">📍 ${u.manzil}</div>
+      <div class="ust-info">📞 ${u.telefon}</div>
+      <div class="ust-info">⏰ ${u.ish_vaqti} &nbsp;·&nbsp; 💰 ${(u.narx_dan||0).toLocaleString()} so'm dan</div>
+      <div class="ust-tags">${u.xizmatlar.map(x=>`<span class="ust-tag">${x}</span>`).join('')}</div>
+      <div class="ust-btns">
+        <button class="btn-edit" onclick="tahrirlash(${u.id})">✏️ Tahrirlash</button>
+        <button class="btn-del" onclick="ochirish(${u.id})">🗑 O'chirish</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── XIZMATLAR ──
+function renderXiz(){
+  document.getElementById('xizWrap').innerHTML = xizmatlar.map((x,i)=>`
+    <span class="xiz-chip">${x}<button onclick="xizOchir(${i})">×</button></span>
+  `).join('');
+}
+function addXizmat(){
+  const v = document.getElementById('xizInp').value.trim();
+  if(!v) return;
+  if(!xizmatlar.includes(v)) xizmatlar.push(v);
+  document.getElementById('xizInp').value='';
+  renderXiz();
+}
+function quickAdd(x){
+  if(!xizmatlar.includes(x)) xizmatlar.push(x);
+  renderXiz();
+}
+function xizOchir(i){xizmatlar.splice(i,1);renderXiz()}
+
+// ── SAQLASH ──
+function saqlash(){
+  const nomi = document.getElementById('fNomi').value.trim();
+  const manzil = document.getElementById('fManzil').value.trim();
+  const telefon = document.getElementById('fTelefon').value.trim();
+  if(!nomi){toast('⚠️ Ustaxona nomini kiriting!');return}
+  if(!manzil){toast('⚠️ Manzilni kiriting!');return}
+  if(!telefon){toast('⚠️ Telefon raqamini kiriting!');return}
+
+  const editId = document.getElementById('editId').value;
+  const obj = {
+    id: editId ? parseInt(editId) : nextId++,
+    nomi, manzil, telefon,
+    narx_dan: parseInt(document.getElementById('fNarx').value)||50000,
+    ish_vaqti: `${document.getElementById('fBoshi').value}–${document.getElementById('fOxiri').value}`,
+    lat: parseFloat(document.getElementById('fLat').value)||41.2995,
+    lng: parseFloat(document.getElementById('fLng').value)||69.2401,
+    ochiq: document.getElementById('fOchiq').value==='true',
+    xizmatlar: [...xizmatlar],
+    reyting: 5.0,
+    sharhlar_soni: 0,
+    masofa_km: 0,
+  };
+
+  if(editId){
+    const idx = data.findIndex(u=>u.id===parseInt(editId));
+    if(idx>=0) data[idx]=obj;
+    toast('✅ USTAXONA YANGILANDI!');
+  } else {
+    data.unshift(obj);
+    toast('✅ USTAXONA QO\'SHILDI!');
+  }
+  render();
+  tozala();
+}
+
+// ── TAHRIRLASH ──
+function tahrirlash(id){
+  const u = data.find(x=>x.id===id);
+  if(!u) return;
+  document.getElementById('editId').value = u.id;
+  document.getElementById('fNomi').value = u.nomi;
+  document.getElementById('fManzil').value = u.manzil;
+  document.getElementById('fTelefon').value = u.telefon;
+  document.getElementById('fNarx').value = u.narx_dan||'';
+  const [boshi,oxiri] = (u.ish_vaqti||'08:00–20:00').split('–');
+  document.getElementById('fBoshi').value = boshi||'08:00';
+  document.getElementById('fOxiri').value = oxiri||'20:00';
+  document.getElementById('fLat').value = u.lat||'';
+  document.getElementById('fLng').value = u.lng||'';
+  document.getElementById('fOchiq').value = String(u.ochiq);
+  xizmatlar = [...u.xizmatlar];
+  renderXiz();
+  document.getElementById('formTitle').textContent = '✏️ USTAXONANI TAHRIRLASH';
+  document.getElementById('saveBtn').textContent = '💾 YANGILASH';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── O'CHIRISH ──
+function ochirish(id){
+  if(!confirm('Rostdan ham o\'chirmoqchimisiz?')) return;
+  data = data.filter(u=>u.id!==id);
+  render();
+  toast('🗑 O\'CHIRILDI');
+}
+
+// ── TOZALASH ──
+function tozala(){
+  document.getElementById('editId').value='';
+  document.getElementById('fNomi').value='';
+  document.getElementById('fManzil').value='';
+  document.getElementById('fTelefon').value='';
+  document.getElementById('fNarx').value='';
+  document.getElementById('fBoshi').value='08:00';
+  document.getElementById('fOxiri').value='20:00';
+  document.getElementById('fLat').value='';
+  document.getElementById('fLng').value='';
+  document.getElementById('fOchiq').value='true';
+  xizmatlar=[];renderXiz();
+  document.getElementById('formTitle').textContent='➕ YANGI USTAXONA QO\'SHISH';
+  document.getElementById('saveBtn').textContent='✅ SAQLASH';
+}
+
+// ── EXPORT (index.html uchun) ──
+function exportData(){
+  const txt = JSON.stringify(data, null, 2);
+  const blob = new Blob([txt],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ustaxonalar.json';
+  a.click();
+  toast('📥 JSON YUKLANDI!');
+}
+
+function toast(msg){
+  const el=document.getElementById('toastEl');
+  el.textContent=msg;el.classList.add('on');
+  setTimeout(()=>el.classList.remove('on'),2500);
+}
+
+render();
+</script>
+
+<!-- Export tugma -->
+<div style="text-align:center;padding:10px 20px 30px">
+  <button onclick="exportData()" style="background:var(--card);border:1px solid var(--border2);color:var(--muted2);border-radius:10px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px">
+    📥 JSON EXPORT (index.html uchun)
+  </button>
+</div>
+
+</body>
+</html>
