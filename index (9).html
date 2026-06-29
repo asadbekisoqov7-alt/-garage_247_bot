@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:;">
+<title>Garage 24/7</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07070f;--bg2:#0d0d1a;--card:#111125;--card2:#161630;
+  --border:#1f1f3a;--border2:#2a2a4a;
+  --f1:#ff2200;--f2:#ff6600;--f3:#ffaa00;
+  --text:#eeeeff;--muted:#44445a;--muted2:#77778a;
+  --green:#00ff88;--red:#ff2244;--r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'Montserrat',sans-serif;color:var(--text);display:flex;flex-direction:column}
+::-webkit-scrollbar{width:2px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+@keyframes load{from{width:0}to{width:100%}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pop{0%{transform:scale(0)}80%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── SPLASH ─── */
+#splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .5s}
+#splash.hide{opacity:0;pointer-events:none}
+.sp-bar{width:120px;height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-top:6px}
+.sp-prog{height:100%;background:linear-gradient(90deg,var(--f1),var(--f3));animation:load 2s ease forwards}
+
+/* ─── REGISTER ─── */
+#regScreen{position:fixed;inset:0;z-index:8000;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:36px 22px 30px;overflow-y:auto}
+#regScreen.show{display:flex}
+.steps{display:flex;gap:6px;justify-content:center;margin-bottom:24px}
+.sdot{width:8px;height:8px;border-radius:4px;background:var(--border2);transition:all .3s}
+.sdot.on{width:24px;background:linear-gradient(90deg,var(--f1),var(--f3))}
+.reg-step{display:none;width:100%;animation:fadeIn .3s ease}
+.reg-step.on{display:block}
+.reg-logo{text-align:center;margin-bottom:18px;animation:float 3s ease-in-out infinite}
+.reg-title{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;text-align:center;margin-bottom:6px}
+.reg-sub{font-size:12px;color:var(--muted2);text-align:center;line-height:1.6;margin-bottom:20px}
+
+/* ROL */
+.rol-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.rol-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:18px 10px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.rol-card:active{transform:scale(.97)}
+.rol-card.on{border-color:var(--f2);background:rgba(255,102,0,.08)}
+.rol-card.on::after{content:'✓';position:absolute;top:8px;right:10px;color:var(--f2);font-size:13px;font-weight:900}
+.rol-ico{margin-bottom:8px}
+.rol-name{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;color:#fff;margin-bottom:4px}
+.rol-desc{font-size:10px;color:var(--muted2);line-height:1.4}
+
+/* BONUS */
+.bonus-box{background:rgba(255,102,0,.07);border:1px solid rgba(255,102,0,.2);border-radius:12px;padding:13px 16px;margin-bottom:14px;text-align:center}
+.bonus-box p{font-size:11px;color:var(--muted2);margin-bottom:4px}
+.bonus-val{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--f2);letter-spacing:1px}
+.bonus-note{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* INPUTS */
+.reg-lbl{font-size:9px;letter-spacing:3px;color:var(--muted);font-weight:700;margin-bottom:6px;display:block}
+.reg-inp{width:100%;padding:13px 16px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:16px;font-weight:600;outline:none;margin-bottom:10px;transition:border-color .2s;letter-spacing:.5px}
+.reg-inp:focus{border-color:var(--f2)}
+.reg-inp::placeholder{color:var(--muted);font-size:13px;font-weight:400;letter-spacing:0}
+.reg-err{color:var(--red);font-size:11px;margin-bottom:8px;display:none;font-weight:700}
+
+/* CONFIRM */
+.conf-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px}
+.conf-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+.conf-row:last-child{border:none}
+.conf-key{font-size:11px;color:var(--muted2)}
+.conf-val{font-size:13px;font-weight:800}
+
+.reg-btn{width:100%;padding:14px;border-radius:11px;border:none;background:linear-gradient(135deg,var(--f1),var(--f3));color:#fff;font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;letter-spacing:.5px;cursor:pointer;margin-bottom:8px;transition:opacity .2s}
+.reg-btn:active{opacity:.85}
+.reg-back{color:var(--muted2);font-size:12px;text-align:center;cursor:pointer;padding:6px;text-decoration:underline}
+
+/* ─── APP ─── */
+.app{display:flex;flex-direction:column;height:100%;overflow:hidden}
+
+/* HEADER */
+.hdr{flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 14px 8px}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.logo{display:flex;align-items:center;gap:9px}
+.logo-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:#fff;line-height:1}
+.logo-tag{font-size:8px;letter-spacing:4px;color:var(--f2);font-weight:600}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.notif-btn{width:32px;height:32px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;position:relative}
+.ndot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--f1);border:1.5px solid var(--bg2);display:none}
+.av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--f1),var(--f3));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:15px;color:#fff;cursor:pointer}
+.srch-row{display:flex;gap:7px}
+.srch{flex:1;padding:9px 13px;background:var(--card);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.srch:focus{border-color:var(--f2)}
+.srch::placeholder{color:var(--muted2)}
+.gps-btn{width:38px;height:38px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--f1),var(--f3));display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;flex-shrink:0}
+
+/* TABS */
+.tabs{flex-shrink:0;display:flex;gap:5px;padding:8px 14px;overflow-x:auto;scrollbar-width:none;background:var(--bg2);border-bottom:1px solid var(--border)}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;border:1px solid var(--border2);background:var(--card);color:var(--muted2);transition:all .2s}
+.tab.on{background:linear-gradient(135deg,var(--f1),var(--f3));color:#fff;border-color:transparent}
+
+/* PAGE NAV */
+.pnav{flex-shrink:0;display:flex;background:var(--bg2);border-bottom:1px solid var(--border)}
+.pnav-btn{flex:1;padding:9px 0;text-align:center;font-size:10px;font-weight:800;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.5px}
+.pnav-btn.on{color:var(--f2);border-bottom-color:var(--f2)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:12px 14px 85px}
+.page{display:none}
+.page.on{display:block;animation:fadeIn .2s ease}
+
+/* STATS */
+.sbar{display:flex;gap:7px;margin-bottom:12px}
+.schip{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:6px 11px;font-size:10px;display:flex;align-items:center;gap:5px;color:var(--muted2);font-weight:600}
+.schip b{color:var(--f2)}
+
+/* USTAXONA CARD */
+.ucard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:11px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .1s}
+.ucard:active{transform:scale(.99)}
+.ucard.vip{border-color:rgba(255,102,0,.4)}
+.ucard-img{height:115px;position:relative;background:linear-gradient(135deg,#0d0d22,#1a0808);display:flex;align-items:center;justify-content:center;font-size:44px;overflow:hidden}
+.ucard-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.6))}
+.bdg{position:absolute;border-radius:20px;font-size:9px;font-weight:800;padding:3px 8px;z-index:1;letter-spacing:.5px}
+.bdg-open{top:8px;right:8px;background:rgba(0,255,136,.15);color:var(--green);border:1px solid rgba(0,255,136,.35)}
+.bdg-closed{top:8px;right:8px;background:rgba(255,34,68,.15);color:var(--red);border:1px solid rgba(255,34,68,.35)}
+.bdg-vip{top:8px;left:8px;background:linear-gradient(90deg,var(--f1),var(--f3));color:#fff}
+.ucard-body{padding:11px 13px}
+.ucard-name{font-size:14px;font-weight:800;margin-bottom:3px}
+.ucard-addr{color:var(--muted2);font-size:11px;margin-bottom:7px}
+.ucard-meta{display:flex;align-items:center;gap:9px;margin-bottom:8px;flex-wrap:wrap}
+.rating{display:flex;align-items:center;gap:2px;font-size:12px;font-weight:700}
+.star{color:var(--f3)}
+.rcnt{color:var(--muted);font-size:10px}
+.dist{font-size:10px;color:var(--muted2)}
+.ptag{font-size:10px;color:var(--f2);font-weight:800;font-family:'Bebas Neue',sans-serif;letter-spacing:.5px}
+.xtags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:9px}
+.xtag{background:var(--card2);border:1px solid var(--border2);border-radius:5px;padding:2px 7px;font-size:9px;color:var(--muted2);font-weight:600}
+.card-btns{display:flex;gap:6px}
+.cbtn{flex:1;padding:8px;border-radius:8px;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:800;font-size:11px;letter-spacing:.5px;transition:all .15s}
+.cbtn:active{transform:scale(.97)}
+.cbtn-fire{background:linear-gradient(135deg,var(--f1),var(--f3));color:#fff}
+.cbtn-out{background:transparent;border:1px solid var(--border2);color:var(--muted2)}
+
+/* OVERLAY */
+.overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:500;overflow-y:auto}
+.overlay.on{display:block;animation:slideUp .25s ease}
+.ov-hdr{position:sticky;top:0;z-index:10;background:var(--bg2);padding:11px 14px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--border)}
+.back{width:32px;height:32px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;flex-shrink:0}
+.ov-title{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1px}
+.ov-img{height:170px;background:linear-gradient(135deg,#0d0d22,#1a0808);display:flex;align-items:center;justify-content:center;font-size:60px}
+
+/* DETAIL */
+.info-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;padding:12px 14px}
+.ibox{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+.ibox-v{font-family:'Bebas Neue',sans-serif;font-size:17px;color:var(--f2)}
+.ibox-l{color:var(--muted2);font-size:9px;margin-top:2px;letter-spacing:.5px;font-weight:600}
+.drow{display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer}
+.dico{width:34px;height:34px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.dtxt p:first-child{font-size:13px;font-weight:700}
+.dtxt p:last-child{font-size:10px;color:var(--muted2);margin-top:2px}
+.sec-t{font-size:9px;letter-spacing:3px;color:var(--muted);padding:14px 14px 8px;font-weight:700}
+.xrow{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin:0 14px 7px;display:flex;justify-content:space-between;align-items:center}
+.xrow-n{font-size:12px;font-weight:700}
+.xrow-p{color:var(--f2);font-weight:800;font-size:13px;font-family:'Bebas Neue',sans-serif}
+
+/* BRON */
+.ob{padding:14px}
+.blbl{font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:6px;font-weight:700}
+.binp{width:100%;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:13px;outline:none;margin-bottom:12px;transition:border-color .2s;appearance:none}
+.binp:focus{border-color:var(--f2)}
+.binp option{background:var(--card2)}
+.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px}
+.tchip{padding:8px 4px;text-align:center;border-radius:7px;background:var(--card);border:1px solid var(--border);font-size:11px;font-weight:800;cursor:pointer;transition:all .2s}
+.tchip.on{background:linear-gradient(135deg,var(--f1),var(--f3));color:#fff;border-color:transparent}
+.tchip.dis{opacity:.25;cursor:not-allowed}
+.narx-info{background:rgba(255,102,0,.07);border:1px solid rgba(255,102,0,.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;display:none}
+.narx-info-val{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--f2)}
+.bepul-badge{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);border-radius:8px;padding:9px 12px;margin-bottom:12px;text-align:center;font-size:11px;color:var(--green);font-weight:700}
+
+/* TO'LOV */
+.pmethods{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.pmethod{background:var(--card);border:2px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all .2s}
+.pmethod.on{border-color:var(--f2);background:rgba(255,102,0,.08)}
+.pmethod-ico{font-size:24px;margin-bottom:5px}
+.pmethod-name{font-size:11px;font-weight:800;letter-spacing:.5px}
+.pmethod-sub{font-size:9px;color:var(--muted2);margin-top:2px}
+.psum{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:14px}
+.prow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)}
+.prow:last-child{border:none}
+.prow span:first-child{font-size:12px;color:var(--muted2)}
+.prow span:last-child{font-size:12px;font-weight:700}
+.ptotal span:last-child{color:var(--f2);font-family:'Bebas Neue',sans-serif;font-size:18px}
+.karta-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:12px}
+.kn-inp{width:100%;background:transparent;border:none;color:var(--text);font-family:'Montserrat',sans-serif;font-size:18px;font-weight:800;letter-spacing:4px;outline:none;margin-bottom:10px}
+.kn-inp::placeholder{color:var(--muted);font-size:14px;letter-spacing:2px;font-weight:400}
+.krow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ks-inp{background:transparent;border:none;border-top:1px solid var(--border);color:var(--text);font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;outline:none;padding-top:10px;width:100%}
+.ks-inp::placeholder{color:var(--muted);font-size:12px}
+.pinfo{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;text-align:center}
+
+/* PROFIL */
+.prof-hero{background:linear-gradient(135deg,#0d0d22,#1a0808);padding:24px 14px 18px;text-align:center;border-bottom:1px solid var(--border)}
+.prof-av{width:68px;height:68px;border-radius:50%;margin:0 auto 10px;background:linear-gradient(135deg,var(--f1),var(--f3));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:28px;color:#fff}
+.prof-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px}
+.prof-sub{color:var(--muted2);font-size:11px;margin-top:3px}
+.prof-rol{display:inline-block;margin-top:8px;padding:4px 14px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:1px}
+.haydovchi-rol{background:rgba(68,136,255,.15);color:#4488ff;border:1px solid rgba(68,136,255,.3)}
+.usta-rol{background:rgba(0,255,136,.15);color:var(--green);border:1px solid rgba(0,255,136,.3)}
+.admin-rol{background:rgba(255,170,0,.15);color:var(--f3);border:1px solid rgba(255,170,0,.3)}
+.sgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:12px 14px}
+.sbox{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.sbox .n{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--f2)}
+.sbox p{color:var(--muted2);font-size:9px;margin-top:2px;letter-spacing:.5px;font-weight:600}
+.pmenu{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:11px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
+.pmenu:active{border-color:var(--f2)}
+.pmenu-ico{font-size:18px;width:30px;text-align:center;flex-shrink:0}
+.pmenu-txt{flex:1}
+.pmenu-txt p:first-child{font-size:13px;font-weight:700}
+.pmenu-txt p:last-child{color:var(--muted2);font-size:10px;margin-top:2px}
+.pmenu-arr{color:var(--muted);font-size:18px}
+
+/* PANEL */
+.ph{border-radius:var(--r);padding:16px;margin-bottom:12px;text-align:center}
+.ph-admin{background:linear-gradient(135deg,#1a0008,#0d0d1a);border:1px solid rgba(255,34,68,.2)}
+.ph-usta{background:linear-gradient(135deg,#001a08,#0d0d1a);border:1px solid rgba(0,255,136,.2)}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.pbox{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.pbox .n{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--f2)}
+.pbox p{color:var(--muted2);font-size:9px;margin-top:3px;letter-spacing:.5px;font-weight:600}
+.pbron{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px}
+.pb-name{font-size:13px;font-weight:800}
+.pb-info{color:var(--muted2);font-size:11px;margin-top:3px}
+.pb-btns{display:flex;gap:6px;margin-top:9px}
+.pb-acc{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--f1),var(--f3));color:#fff;font-family:'Montserrat',sans-serif;font-weight:800;font-size:11px}
+.pb-rej{padding:7px 14px;border-radius:7px;cursor:pointer;background:transparent;border:1px solid var(--border2);color:var(--muted2);font-family:'Montserrat',sans-serif;font-weight:800;font-size:11px}
+
+/* SHARH */
+.srow{display:flex;gap:8px;justify-content:center;margin:10px 0 12px}
+.sbtn{font-size:28px;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.4}
+.sbtn.on{filter:none;opacity:1;transform:scale(1.1)}
+
+/* SUCCESS */
+.sw{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:30px;text-align:center}
+
+/* BOTTOM NAV */
+.bnav{flex-shrink:0;display:flex;background:var(--bg2);border-top:1px solid var(--border);padding:5px 0 10px}
+.bi{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:4px 0}
+.bi-ico{font-size:20px;transition:transform .2s}
+.bi-lbl{font-size:8px;color:var(--muted);font-weight:700;letter-spacing:.5px}
+.bi.on .bi-ico{transform:scale(1.15)}
+.bi.on .bi-lbl{color:var(--f2)}
+
+/* BTN */
+.btn-f{background:linear-gradient(135deg,var(--f1),var(--f3));color:#fff;border:none;border-radius:9px;padding:12px;font-weight:800;font-size:13px;letter-spacing:.5px;cursor:pointer;width:100%;font-family:'Montserrat',sans-serif;transition:opacity .2s}
+.btn-f:active{opacity:.85}
+.btn-o{background:transparent;border:1px solid var(--border2);color:var(--muted2);border-radius:9px;padding:10px;font-weight:700;font-size:12px;cursor:pointer;width:100%;font-family:'Montserrat',sans-serif;margin-top:7px}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#fff;color:#000;padding:9px 20px;border-radius:20px;font-weight:800;font-size:12px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;letter-spacing:.3px}
+.toast.on{opacity:1}
+
+/* EMPTY / LOADING */
+.spin-wrap{text-align:center;padding:44px}
+.spin{width:30px;height:30px;border:2.5px solid var(--border2);border-top-color:var(--f2);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+.empty{text-align:center;padding:44px 20px;color:var(--muted2)}
+.empty p:first-child{font-size:40px;margin-bottom:12px}
+.empty p{font-size:12px;line-height:1.6}
+
+/* TOPUP */
+.kb{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px}
+.kb-num{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:#fff;margin-bottom:6px}
+.kb-owner{font-size:12px;color:var(--muted2);margin-bottom:10px}
+.ksteps{display:flex;flex-direction:column;gap:7px}
+.kstep{display:flex;align-items:flex-start;gap:8px;font-size:11px;color:var(--muted2);line-height:1.5}
+.kstep-n{background:linear-gradient(135deg,var(--f1),var(--f3));color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;flex-shrink:0;margin-top:1px}
+.amt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+
+/* ── CHAT ── */
+.chat-ov{position:fixed;inset:0;z-index:600;display:none;flex-direction:column;background:var(--bg)}
+.chat-ov.on{display:flex;animation:slideUp .25s ease}
+.chat-hdr{flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px}
+.chat-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--f1),var(--f3));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:15px;color:#fff;flex-shrink:0}
+.chat-info{flex:1}
+.chat-info-nom{font-size:13px;font-weight:800}
+.chat-info-sub{font-size:9px;color:var(--green);margin-top:1px}
+.chat-msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.cmsg{max-width:80%;animation:fadeIn .2s ease}
+.cmsg.me{align-self:flex-end}
+.cmsg.them{align-self:flex-start}
+.cmsg-bbl{padding:9px 12px;border-radius:12px;font-size:12px;line-height:1.5;word-break:break-word}
+.cmsg.me .cmsg-bbl{background:linear-gradient(135deg,var(--f1),var(--f3));color:#fff;border-radius:12px 12px 3px 12px}
+.cmsg.them .cmsg-bbl{background:var(--card2);border:1px solid var(--border);border-radius:12px 12px 12px 3px}
+.cmsg-t{font-size:9px;color:var(--muted);margin-top:3px;text-align:right}
+.chat-inp-row{flex-shrink:0;background:var(--bg2);border-top:1px solid var(--border);padding:9px 12px;display:flex;gap:8px;align-items:flex-end}
+.chat-textarea{flex:1;background:var(--card);border:1px solid var(--border2);border-radius:18px;padding:9px 14px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:13px;outline:none;resize:none;max-height:80px;line-height:1.4;overflow-y:auto}
+.chat-textarea:focus{border-color:var(--f2)}
+.chat-snd-btn{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--f1),var(--f3));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;transition:transform .15s}
+.chat-snd-btn:active{transform:scale(.9)}
+/* CHAT LIST */
+.chatlist-ov{position:fixed;inset:0;z-index:590;display:none;flex-direction:column;background:var(--bg)}
+.chatlist-ov.on{display:flex;animation:slideUp .25s ease}
+.cli-item{display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.cli-item:active{background:var(--card)}
+.cli-av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--f1),var(--f3));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:17px;color:#fff;flex-shrink:0}
+.cli-info{flex:1;min-width:0}
+.cli-nom{font-size:13px;font-weight:800;margin-bottom:2px}
+.cli-last{font-size:10px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cli-time{font-size:9px;color:var(--muted);flex-shrink:0}
+.cli-unread{background:var(--f1);color:#fff;border-radius:10px;padding:1px 6px;font-size:9px;font-weight:900;margin-left:4px}
+/* BRON BEKOR */
+.bron-act-row{display:flex;gap:7px;margin-top:9px}
+.btn-cancel-sm{background:rgba(255,34,68,.1);border:1px solid rgba(255,34,68,.3);color:var(--red);border-radius:7px;padding:6px 12px;font-size:10px;font-weight:800;cursor:pointer;font-family:'Montserrat',sans-serif;transition:background .2s}
+.btn-chat-sm{background:var(--card2);border:1px solid var(--border2);color:var(--muted2);border-radius:7px;padding:6px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;flex:1}
+
+/* ── XARITA ── */
+.map-ov{position:fixed;inset:0;z-index:580;display:none;flex-direction:column;background:var(--bg)}
+.map-ov.on{display:flex;animation:slideUp .25s ease}
+.map-hdr{flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px}
+#mapFrame{flex:1;border:none;width:100%;background:#1a1a1a}
+.map-cards{flex-shrink:0;background:var(--bg2);border-top:1px solid var(--border);padding:10px 12px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;max-height:130px}
+.map-cards::-webkit-scrollbar{display:none}
+.map-card{flex-shrink:0;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:9px 12px;cursor:pointer;min-width:150px;transition:border-color .2s}
+.map-card:active{border-color:var(--f2)}
+.map-card-nom{font-size:11px;font-weight:800;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.map-card-meta{font-size:10px;color:var(--muted2)}
+.map-card-btn{margin-top:6px;background:var(--f2);color:#000;border:none;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:800;cursor:pointer;font-family:'Montserrat',sans-serif;width:100%}
+
+/* USTA ARIZA */
+.ariza-ov{position:fixed;inset:0;z-index:610;background:var(--bg);display:none;overflow-y:auto}
+.ariza-ov.on{display:block;animation:slideUp .25s ease}
+.ariza-hdr{position:sticky;top:0;z-index:10;background:var(--bg2);border-bottom:1px solid var(--border);padding:11px 14px;display:flex;align-items:center;gap:10px}
+.ariza-body{padding:16px 14px 40px}
+.ariza-img-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:20px}
+.ariza-img-circle{width:90px;height:90px;border-radius:14px;background:var(--card2);border:2px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:28px;color:var(--muted2);transition:border-color .2s;overflow:hidden}
+.ariza-img-circle:active{border-color:var(--f2)}
+.ariza-img-lbl{font-size:10px;color:var(--muted2);margin-top:8px}
+.xiz-add-row{display:flex;gap:8px;margin-bottom:8px}
+.xiz-add-inp{flex:1;background:var(--card);border:1px solid var(--border2);border-radius:9px;padding:9px 12px;color:var(--text);font-size:12px;font-family:'Montserrat',sans-serif;outline:none}
+.xiz-add-inp:focus{border-color:var(--f2)}
+.xiz-add-btn{background:var(--f2);color:#000;border:none;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:'Montserrat',sans-serif}
+.xiz-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.xiz-tag{background:rgba(255,102,0,.12);border:1px solid rgba(255,102,0,.3);color:var(--f2);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px}
+.xiz-tag-del{cursor:pointer;color:var(--muted2);font-size:14px;line-height:1}
+/* USTA ARIZALAR (admin) */
+.ariza-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:10px}
+.ariza-card-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ariza-card-av{width:48px;height:48px;border-radius:10px;background:var(--card2);object-fit:cover;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px}
+.ariza-card-info{flex:1}
+.ariza-card-nom{font-size:13px;font-weight:800;margin-bottom:2px}
+.ariza-card-sub{font-size:10px;color:var(--muted2)}
+.ariza-status{font-size:9px;font-weight:800;padding:3px 8px;border-radius:6px;margin-left:auto}
+.ariza-status.kutilmoqda{background:rgba(255,102,0,.15);color:var(--f2)}
+.ariza-status.tasdiqlandi{background:rgba(34,197,94,.15);color:var(--green)}
+.ariza-status.rad{background:rgba(239,68,68,.15);color:var(--red)}
+.ariza-btns{display:flex;gap:8px;margin-top:10px}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <svg viewBox="0 0 240 240" width="88" height="88" xmlns="http://www.w3.org/2000/svg" style="animation:float 3s ease-in-out infinite;filter:drop-shadow(0 0 20px rgba(255,102,0,.3))">
+    <defs>
+      <linearGradient id="sg" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#FF2200"/><stop offset="100%" style="stop-color:#FFAA00"/></linearGradient>
+      <linearGradient id="sr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#FFAA00"/><stop offset="100%" style="stop-color:#FF2200"/></linearGradient>
+    </defs>
+    <path d="M120,15 L210,58 L210,162 Q210,210 120,228 Q30,210 30,162 L30,58 Z" fill="none" stroke="url(#sr)" stroke-width="4"/>
+    <path d="M120,28 L197,67 L197,160 Q197,202 120,218 Q43,202 43,160 L43,67 Z" fill="#0c0c1a"/>
+    <text x="120" y="175" font-family="'Arial Black',Impact,sans-serif" font-size="140" font-weight="900" text-anchor="middle" fill="url(#sg)">G</text>
+  </svg>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:3px">GARAGE 24/7</div>
+  <div style="font-size:10px;letter-spacing:5px;color:var(--f2)">AUTO SERVICE</div>
+  <div class="sp-bar"><div class="sp-prog"></div></div>
+</div>
+
+<!-- REGISTER -->
+<div id="regScreen">
+  <div class="steps">
+    <div class="sdot on" id="sd1"></div>
+    <div class="sdot" id="sd2"></div>
+    <div class="sdot" id="sd3"></div>
+  </div>
+
+  <!-- STEP 1: ROL -->
+  <div class="reg-step on" id="step1">
+    <div class="reg-logo">
+      <svg viewBox="0 0 240 240" width="65" height="65" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="rg" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#FF2200"/><stop offset="100%" style="stop-color:#FFAA00"/></linearGradient>
+          <linearGradient id="rr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#FFAA00"/><stop offset="100%" style="stop-color:#FF2200"/></linearGradient>
+        </defs>
+        <path d="M120,15 L210,58 L210,162 Q210,210 120,228 Q30,210 30,162 L30,58 Z" fill="none" stroke="url(#rr)" stroke-width="4"/>
+        <path d="M120,28 L197,67 L197,160 Q197,202 120,218 Q43,202 43,160 L43,67 Z" fill="#0c0c1a"/>
+        <text x="120" y="175" font-family="'Arial Black',Impact,sans-serif" font-size="140" font-weight="900" text-anchor="middle" fill="url(#rg)">G</text>
+      </svg>
+    </div>
+    <div class="reg-title">XUSH KELIBSIZ!</div>
+    <div class="reg-sub">Siz kim sifatida foydalanasiz?</div>
+    <div class="rol-grid">
+      <div class="rol-card" id="rc-haydovchi" onclick="rolTanla('haydovchi')">
+        <div class="rol-ico">
+          <svg width="52" height="34" viewBox="0 0 52 34" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="11" width="46" height="17" rx="6" fill="#ff6600"/>
+            <rect x="9" y="4" width="24" height="13" rx="5" fill="#ff9900"/>
+            <circle cx="13" cy="28" r="6" fill="#1a1a2e" stroke="#ff6600" stroke-width="2.5"/>
+            <circle cx="39" cy="28" r="6" fill="#1a1a2e" stroke="#ff6600" stroke-width="2.5"/>
+            <rect x="10" y="5" width="9" height="8" rx="2.5" fill="rgba(135,206,235,.75)"/>
+            <rect x="21" y="5" width="6" height="8" rx="2" fill="rgba(135,206,235,.6)"/>
+            <circle cx="13" cy="28" r="2.5" fill="#444"/>
+            <circle cx="39" cy="28" r="2.5" fill="#444"/>
+            <rect x="45" y="15" width="4" height="3" rx="1" fill="#ffcc00"/>
+            <rect x="3" y="15" width="4" height="3" rx="1" fill="#ff4444"/>
+          </svg>
+        </div>
+        <div class="rol-name">HAYDOVCHI</div>
+        <div class="rol-desc">Ustaxona qidiraman va bron qilaman</div>
+      </div>
+      <div class="rol-card" id="rc-usta" onclick="rolTanla('usta')">
+        <div class="rol-ico">
+          <svg width="52" height="42" viewBox="0 0 52 42" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="20" width="40" height="18" rx="4" fill="#0d0d1a" stroke="#ff6600" stroke-width="1.5"/>
+            <circle cx="16" cy="14" r="7" fill="none" stroke="#ff6600" stroke-width="2.5"/>
+            <rect x="14" y="14" width="4" height="11" rx="2" fill="#ff6600"/>
+            <rect x="18" y="20" width="7" height="2.5" rx="1.2" fill="#ff6600"/>
+            <rect x="18" y="23.5" width="5.5" height="2.5" rx="1.2" fill="#ff6600"/>
+            <circle cx="16" cy="14" r="3" fill="#ff6600" opacity=".4"/>
+            <rect x="28" y="10" width="16" height="3" rx="1.5" fill="#ffaa00"/>
+            <rect x="30" y="6" width="12" height="3" rx="1.5" fill="#ffaa00"/>
+            <rect x="32" y="2" width="8" height="3.5" rx="1.5" fill="#ff6600"/>
+            <rect x="10" y="24" width="32" height="10" rx="3" fill="rgba(255,102,0,.08)"/>
+          </svg>
+        </div>
+        <div class="rol-name">USTA</div>
+        <div class="rol-desc">Ustaxona egasiman, bronlarni qabul qilaman</div>
+      </div>
+    </div>
+    <div id="rolErr" class="reg-err">⚠️ Iltimos, rolni tanlang!</div>
+    <button class="reg-btn" onclick="step1Next()">DAVOM ETISH →</button>
+  </div>
+
+  <!-- STEP 2: TELEFON -->
+  <div class="reg-step" id="step2">
+    <div style="font-size:54px;text-align:center;margin-bottom:14px" id="s2ico">🚗</div>
+    <div class="reg-title" id="s2title">HAYDOVCHI</div>
+    <div class="reg-sub">Telefon raqamingizni kiriting</div>
+    <div class="bonus-box">
+      <p>🎁 Ro'yxatdan o'tganingiz uchun</p>
+      <div class="bonus-val">30,000 SO'M</div>
+      <div class="bonus-note">Faqat ilovada bron uchun ishlatiladi</div>
+    </div>
+    <label class="reg-lbl">TELEFON RAQAM</label>
+    <input class="reg-inp" id="phoneInp" type="tel" placeholder="+998 90 123 45 67" maxlength="17" oninput="fmtPhone(this)" onkeydown="if(event.key==='Enter')step2Next()"/>
+    <div id="phoneErr" class="reg-err">⚠️ To'g'ri telefon raqam kiriting!</div>
+    <button class="reg-btn" onclick="step2Next()">DAVOM ETISH →</button>
+    <div class="reg-back" onclick="goStep(1)">← Orqaga</div>
+  </div>
+
+  <!-- STEP 3: TASDIQLASH -->
+  <div class="reg-step" id="step3">
+    <div style="font-size:62px;text-align:center;margin-bottom:14px;animation:pop .5s ease">✅</div>
+    <div class="reg-title">TAYYOR!</div>
+    <div class="reg-sub">Ma'lumotlaringiz tasdiqlandi</div>
+    <div class="conf-card">
+      <div class="conf-row"><span class="conf-key">Rol</span><span class="conf-val" id="confRol">—</span></div>
+      <div class="conf-row"><span class="conf-key">Telefon</span><span class="conf-val" id="confPhone">—</span></div>
+      <div class="conf-row"><span class="conf-key">Bonus</span><span class="conf-val" style="color:var(--f2)">+30,000 so'm 🎁</span></div>
+    </div>
+    <button class="reg-btn" onclick="step3Finish()">🚀 BOSHLASH</button>
+    <div class="reg-back" onclick="goStep(2)">← Orqaga</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="appShell" style="display:none">
+  <div class="hdr">
+    <div class="hdr-top">
+      <div class="logo">
+        <svg viewBox="0 0 240 240" width="34" height="34" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lg" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#FF2200"/><stop offset="100%" style="stop-color:#FFAA00"/></linearGradient>
+            <linearGradient id="lr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#FFAA00"/><stop offset="100%" style="stop-color:#FF2200"/></linearGradient>
+          </defs>
+          <path d="M120,15 L210,58 L210,162 Q210,210 120,228 Q30,210 30,162 L30,58 Z" fill="none" stroke="url(#lr)" stroke-width="4"/>
+          <path d="M120,28 L197,67 L197,160 Q197,202 120,218 Q43,202 43,160 L43,67 Z" fill="#0c0c1a"/>
+          <text x="120" y="175" font-family="'Arial Black',Impact,sans-serif" font-size="140" font-weight="900" text-anchor="middle" fill="url(#lg)">G</text>
+        </svg>
+        <div>
+          <div class="logo-name">GARAGE 24/7</div>
+          <div class="logo-tag">AUTO SERVICE</div>
+        </div>
+      </div>
+      <div class="hdr-right">
+        <div class="notif-btn" onclick="goPage('notif')">🔔<div class="ndot" id="ndot"></div></div>
+        <div class="av" id="avEl" onclick="goPage('profil')">G</div>
+      </div>
+    </div>
+    <div class="srch-row">
+      <input class="srch" type="text" placeholder="Xizmat yoki ustaxona..." id="srchEl" oninput="doSearch()"/>
+      <button class="gps-btn" onclick="doGps()">📍</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" onclick="fTab(this,'all')">BARCHASI</div>
+    <div class="tab" onclick="fTab(this,'Moy')">🔧 MOY</div>
+    <div class="tab" onclick="fTab(this,'Kuzov')">🚗 KUZOV</div>
+    <div class="tab" onclick="fTab(this,'Shina')">🔄 SHINA</div>
+    <div class="tab" onclick="fTab(this,'Diagnostika')">🔍 DIAGNOS</div>
+    <div class="tab" onclick="fTab(this,'Dvigatel')">⚙️ DVIGATEL</div>
+    <div class="tab" onclick="fTab(this,'Elektr')">⚡ ELEKTR</div>
+  </div>
+
+  <div class="pnav">
+    <div class="pnav-btn on" id="pn-asosiy" onclick="goPage('asosiy')">RO'YXAT</div>
+    <div class="pnav-btn" id="pn-bronlarim" onclick="goPage('bronlarim')">BRONLAR</div>
+    <div class="pnav-btn" id="pn-panel" onclick="goPage('panel')">PANEL</div>
+  </div>
+
+  <div class="content">
+
+    <!-- ASOSIY -->
+    <div class="page on" id="pg-asosiy">
+      <div class="sbar">
+        <div class="schip"><b id="cntEl">0</b> ustaxona</div>
+        <div class="schip">📍 Yaqin atrofda</div>
+      </div>
+      <div id="listEl"><div class="spin-wrap"><div class="spin"></div><p style="color:var(--muted2);font-size:12px">Yuklanmoqda...</p></div></div>
+    </div>
+
+    <!-- BRONLARIM -->
+    <div class="page" id="pg-bronlarim">
+      <div id="bronListEl"><div class="empty"><p>📅</p><p>Hozircha bronlar yo'q.<br>Ustaxona tanlang va bron qiling!</p></div></div>
+    </div>
+
+    <!-- SEVIMLILAR -->
+    <div class="page" id="pg-sevimlilar">
+      <div id="sevListEl"><div class="empty"><p>⭐</p><p>Sevimli ustaxonalar yo'q.<br>Ustaxona sahifasida ⭐ bosing!</p></div></div>
+    </div>
+
+    <!-- NOTIF -->
+    <div class="page" id="pg-notif">
+      <div id="notifList">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px;display:flex;gap:10px">
+          <div style="width:34px;height:34px;border-radius:8px;background:rgba(255,102,0,.15);border:1px solid rgba(255,102,0,.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🎁</div>
+          <div><p style="font-size:13px;font-weight:700">Xush kelibsiz!</p><p style="font-size:10px;color:var(--muted2);margin-top:3px">Hisobingizga bonus qo'shildi</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFIL -->
+    <div class="page" id="pg-profil">
+      <div class="prof-hero">
+        <div class="prof-av" id="profAv">G</div>
+        <div class="prof-name" id="profName">Foydalanuvchi</div>
+        <div class="prof-sub" id="profSub"></div>
+        <div class="prof-rol haydovchi-rol" id="profRol">🚗 HAYDOVCHI</div>
+      </div>
+      <div class="sgrid">
+        <div class="sbox"><div class="n" id="pBron">0</div><p>BRONLAR</p></div>
+        <div class="sbox"><div class="n" id="pSev">0</div><p>SEVIMLI</p></div>
+        <div class="sbox"><div class="n" id="pBal">—</div><p>BALANS</p></div>
+      </div>
+      <div style="padding:0 14px">
+        <div class="pmenu" onclick="goPage('bronlarim')"><div class="pmenu-ico">📅</div><div class="pmenu-txt"><p>Bronlarim</p><p>Barcha bronlar tarixi</p></div><div class="pmenu-arr">›</div></div>
+        <div class="pmenu" onclick="goPage('sevimlilar')"><div class="pmenu-ico">⭐</div><div class="pmenu-txt"><p>Sevimlilar</p><p>Saqlangan ustaxonalar</p></div><div class="pmenu-arr">›</div></div>
+        <div class="pmenu" onclick="showRef()"><div class="pmenu-ico">👥</div><div class="pmenu-txt"><p>Do'st taklif qilish</p><p>+15,000 so'm bonus oling</p></div><div class="pmenu-arr">›</div></div>
+        <div class="pmenu" onclick="openOv('topupOv')"><div class="pmenu-ico">💰</div><div class="pmenu-txt"><p>Balansni to'ldirish</p><p>Karta orqali to'lash</p></div><div class="pmenu-arr">›</div></div>
+        <div class="pmenu" onclick="chiqish()"><div class="pmenu-ico">🚪</div><div class="pmenu-txt"><p>Chiqish</p><p>Boshqa hisob bilan kirish</p></div><div class="pmenu-arr">›</div></div>
+      </div>
+    </div>
+
+    <!-- PANEL -->
+    <div class="page" id="pg-panel">
+      <div id="adminPanel" style="display:none">
+        <div class="ph ph-admin">
+          <div style="font-size:30px;margin-bottom:6px">👑</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px">ADMIN PANEL</div>
+          <div style="font-size:11px;color:var(--muted2);margin-top:4px">Barcha tizimni boshqarasiz</div>
+        </div>
+        <div class="pgrid">
+          <div class="pbox"><div class="n" id="aUst">0</div><p>USTAXONA</p></div>
+          <div class="pbox"><div class="n" id="aBron">0</div><p>BRONLAR</p></div>
+          <div class="pbox"><div class="n" id="aFoy">0</div><p>FOYDALANUVCHI</p></div>
+          <div class="pbox"><div class="n" id="aDar">0</div><p>DAROMAD</p></div>
+        </div>
+        <a href="admin.html" style="display:block;padding:13px;background:linear-gradient(135deg,var(--f1),var(--f3));color:#fff;border-radius:10px;text-align:center;font-weight:800;font-size:13px;text-decoration:none;letter-spacing:.5px;margin-bottom:12px">📊 TO'LIQ ADMIN PANEL →</a>
+        <div style="font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:10px;font-weight:700">SO'NGI BRONLAR</div>
+        <div id="adminBronEl"><div class="empty"><p>📅</p><p>Hozircha bronlar yo'q</p></div></div>
+      </div>
+
+      <div id="ustaPanel" style="display:none">
+        <div class="ph ph-usta">
+          <div style="font-size:30px;margin-bottom:6px">🔧</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px">USTA PANELI</div>
+          <div style="font-size:11px;color:var(--muted2);margin-top:4px">Ustaxonangizni boshqaring</div>
+        </div>
+        <div class="pgrid">
+          <div class="pbox"><div class="n" id="uBugun">0</div><p>BUGUNGI</p></div>
+          <div class="pbox"><div class="n" id="uJami">0</div><p>JAMI BRON</p></div>
+          <div class="pbox"><div class="n" id="uRey">5.0⭐</div><p>REYTING</p></div>
+          <div class="pbox"><div class="n" id="uDar">0</div><p>DAROMAD</p></div>
+        </div>
+        <div style="font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:10px;font-weight:700">KIRUVCHI BRONLAR</div>
+        <div id="ustaBronEl"><div class="empty"><p>📅</p><p>Hozircha bronlar yo'q</p></div></div>
+      </div>
+
+      <div id="haydovchiPanel" style="display:none">
+        <div class="empty">
+          <p>🚗</p>
+          <p>Siz haydovchi sifatida kirgansiz.<br>Ustaxona qidirish uchun quyidagi tugmani bosing.</p>
+        </div>
+        <div style="margin-top:16px"><button class="btn-f" onclick="goPage('asosiy')">🔍 USTAXONA QIDIRISH</button></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bnav">
+    <div class="bi on" onclick="goPage('asosiy')" id="bn-asosiy"><div class="bi-ico">🔍</div><div class="bi-lbl">QIDIRISH</div></div>
+    <div class="bi" onclick="goPage('bronlarim')" id="bn-bronlarim"><div class="bi-ico">📅</div><div class="bi-lbl">BRONLAR</div></div>
+    <div class="bi" onclick="openOv('chatListOv');renderChatList()" id="bn-chat"><div class="bi-ico">💬</div><div class="bi-lbl">CHAT</div></div>
+    <div class="bi" onclick="goPage('sevimlilar')" id="bn-sevimlilar"><div class="bi-ico">⭐</div><div class="bi-lbl">SEVIMLI</div></div>
+    <div class="bi" onclick="goPage('profil')" id="bn-profil"><div class="bi-ico">👤</div><div class="bi-lbl">PROFIL</div></div>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div class="overlay" id="detailOv">
+  <div class="ov-hdr">
+    <div class="back" onclick="closeOv('detailOv')">←</div>
+    <div class="ov-title" id="detailTitle">USTAXONA</div>
+    <div style="margin-left:auto;cursor:pointer;font-size:20px" id="sevBtn" onclick="toggleSev()">🤍</div>
+  </div>
+  <div class="ov-img" id="detailImg">🔧</div>
+  <div id="detailBody"></div>
+</div>
+
+<!-- BRON -->
+<div class="overlay" id="bronOv">
+  <div class="ov-hdr">
+    <div class="back" onclick="closeOv('bronOv')">←</div>
+    <div class="ov-title">BRON QILISH</div>
+  </div>
+  <div class="ob">
+    <div id="bronUstEl" style="margin-bottom:12px"></div>
+    <div class="blbl">XIZMAT TANLANG</div>
+    <select class="binp" id="bronXiz" onchange="onXizChange(this)"><option value="">Xizmat tanlang...</option></select>
+    <div class="narx-info" id="narxInfo">
+      <span style="font-size:12px;color:var(--muted2)">Xizmat narxi:</span>
+      <span class="narx-info-val" id="narxVal">0</span>
+    </div>
+    <div class="bepul-badge" id="bepulBadge" style="display:none">✅ BEPUL BRON — To'lov ustaxonada amalga oshiriladi</div>
+    <div class="blbl">AVTOMOBIL</div>
+    <input class="binp" id="bronAvto" placeholder="Masalan: Nexia 2020..."/>
+    <div class="blbl">SANA</div>
+    <input class="binp" type="date" id="bronSana"/>
+    <div class="blbl">VAQT</div>
+    <div class="tgrid">
+      <div class="tchip on" onclick="pickTime(this)">08:00</div>
+      <div class="tchip" onclick="pickTime(this)">09:00</div>
+      <div class="tchip" onclick="pickTime(this)">10:00</div>
+      <div class="tchip" onclick="pickTime(this)">11:00</div>
+      <div class="tchip dis">12:00</div>
+      <div class="tchip" onclick="pickTime(this)">13:00</div>
+      <div class="tchip" onclick="pickTime(this)">14:00</div>
+      <div class="tchip" onclick="pickTime(this)">15:00</div>
+      <div class="tchip" onclick="pickTime(this)">16:00</div>
+      <div class="tchip" onclick="pickTime(this)">17:00</div>
+      <div class="tchip" onclick="pickTime(this)">18:00</div>
+      <div class="tchip dis">19:00</div>
+    </div>
+    <div class="blbl">IZOH</div>
+    <textarea class="binp" id="bronIzoh" rows="2" placeholder="Muammo haqida..."></textarea>
+    <button class="btn-f" onclick="bronSubmit()" id="bronBtn">✅ BRON QILISH</button>
+  </div>
+</div>
+
+<!-- TO'LOV (faqat usta uchun) -->
+<div class="overlay" id="tolovOv">
+  <div class="ov-hdr">
+    <div class="back" onclick="closeOv('tolovOv');openOv('bronOv')">←</div>
+    <div class="ov-title">TO'LOV</div>
+  </div>
+  <div class="ob">
+    <div class="blbl">BUYURTMA XULOSASI</div>
+    <div class="psum">
+      <div class="prow"><span>Ustaxona</span><span id="pUst">—</span></div>
+      <div class="prow"><span>Xizmat</span><span id="pXiz">—</span></div>
+      <div class="prow"><span>Sana / Vaqt</span><span id="pVaqt">—</span></div>
+      <div class="prow ptotal"><span>JAMI TO'LOV</span><span id="pJami">—</span></div>
+    </div>
+    <div class="blbl">TO'LOV USULI</div>
+    <div class="pmethods">
+      <div class="pmethod on" onclick="selPayM(this,'payme')"><div class="pmethod-ico">💙</div><div class="pmethod-name">PAYME</div><div class="pmethod-sub">Payme.uz</div></div>
+      <div class="pmethod" onclick="selPayM(this,'click')"><div class="pmethod-ico">🟢</div><div class="pmethod-name">CLICK</div><div class="pmethod-sub">Click.uz</div></div>
+      <div class="pmethod" onclick="selPayM(this,'karta')"><div class="pmethod-ico">💳</div><div class="pmethod-name">KARTA</div><div class="pmethod-sub">Uzcard / Humo</div></div>
+      <div class="pmethod" onclick="selPayM(this,'naqd')"><div class="pmethod-ico">💵</div><div class="pmethod-name">NAQD</div><div class="pmethod-sub">Ustaxonada</div></div>
+    </div>
+    <div id="kartaWrap" style="display:none">
+      <div class="blbl">KARTA MA'LUMOTLARI</div>
+      <div class="karta-wrap">
+        <input class="kn-inp" id="cardNum" maxlength="19" placeholder="0000  0000  0000  0000" oninput="fmtCard(this)"/>
+        <div class="krow">
+          <input class="ks-inp" id="cardExp" maxlength="5" placeholder="MM / YY" oninput="fmtExp(this)"/>
+          <input class="ks-inp" id="cardCvv" maxlength="3" placeholder="CVV" type="password"/>
+        </div>
+      </div>
+    </div>
+    <div id="payInfoWrap" style="display:none">
+      <div class="pinfo"><div style="font-size:34px;margin-bottom:8px" id="payIco">💙</div><div style="font-size:13px;font-weight:800;margin-bottom:4px" id="payName">PAYME</div><div style="font-size:11px;color:var(--muted2)" id="payDesc">Payme.uz ilovasiga yo'naltirilasiz</div></div>
+    </div>
+    <div id="naqdWrap" style="display:none">
+      <div class="pinfo"><div style="font-size:34px;margin-bottom:8px">💵</div><div style="font-size:13px;font-weight:800;margin-bottom:4px">NAQD PUL</div><div style="font-size:11px;color:var(--muted2)">To'lovni ustaxonada amalga oshirasiz</div></div>
+    </div>
+    <button class="btn-f" onclick="submitTolov()" id="payBtn">💳 TO'LOVNI AMALGA OSHIRISH</button>
+    <button class="btn-o" onclick="closeOv('tolovOv')">BEKOR QILISH</button>
+  </div>
+</div>
+
+<!-- MUVAFFAQIYAT -->
+<div class="overlay" id="successOv">
+  <div class="sw">
+    <div style="font-size:78px;margin-bottom:18px;animation:pop .5s ease">✅</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:2px;margin-bottom:10px">BRON TASDIQLANDI!</div>
+    <div style="color:var(--muted2);font-size:13px;line-height:1.7;margin-bottom:22px" id="succText"></div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px;width:100%;margin-bottom:18px" id="succCard"></div>
+    <button class="btn-f" style="max-width:280px" onclick="successDone()">🏠 BOSH SAHIFAGA</button>
+  </div>
+</div>
+
+<!-- SHARH -->
+<div class="overlay" id="sharhOv">
+  <div class="ov-hdr">
+    <div class="back" onclick="closeOv('sharhOv')">←</div>
+    <div class="ov-title">SHARH QOLDIRISH</div>
+  </div>
+  <div class="ob">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;text-align:center">
+      <div style="font-size:14px;font-weight:800;margin-bottom:8px" id="sharhUst">Ustaxona</div>
+      <div class="srow" id="starsRow">
+        <span class="sbtn" onclick="setStar(1)">⭐</span>
+        <span class="sbtn" onclick="setStar(2)">⭐</span>
+        <span class="sbtn" onclick="setStar(3)">⭐</span>
+        <span class="sbtn on" onclick="setStar(4)">⭐</span>
+        <span class="sbtn on" onclick="setStar(5)">⭐</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted2)" id="starLbl">Yaxshi (4)</div>
+    </div>
+    <textarea class="binp" id="sharhMatn" rows="4" placeholder="Xizmat haqida fikringiz..."></textarea>
+    <button class="btn-f" onclick="submitSharh()">⭐ SHARHNI YUBORISH</button>
+  </div>
+</div>
+
+<!-- BALANS TO'LDIRISH -->
+<div class="overlay" id="topupOv">
+  <div class="ov-hdr">
+    <div class="back" onclick="closeOv('topupOv')">←</div>
+    <div class="ov-title">BALANS TO'LDIRISH</div>
+  </div>
+  <div class="ob">
+    <div class="blbl">TO'LOV KARTASI</div>
+    <div class="kb">
+      <div class="kb-num">4073 4200 2335 2382</div>
+      <div class="kb-owner">Sojida Musaeva · Uzcard</div>
+      <div class="ksteps">
+        <div class="kstep"><div class="kstep-n">1</div><div>Karta raqamini nusxalab oling</div></div>
+        <div class="kstep"><div class="kstep-n">2</div><div>Bank ilovangizdan shu kartaga pul o'tkazing</div></div>
+        <div class="kstep"><div class="kstep-n">3</div><div>Izohga: <strong style="color:var(--f2)" id="topupCode">G247-...</strong></div></div>
+        <div class="kstep"><div class="kstep-n">4</div><div>Chekni yuboring — 5–30 daqiqada balansingiz to'ldiriladi</div></div>
+      </div>
+    </div>
+    <div class="blbl">MIQDOR TANLANG</div>
+    <div class="amt-grid">
+      <div class="tchip" onclick="selAmt(this,50000)" style="padding:10px 4px">50K</div>
+      <div class="tchip on" onclick="selAmt(this,100000)" style="padding:10px 4px">100K</div>
+      <div class="tchip" onclick="selAmt(this,200000)" style="padding:10px 4px">200K</div>
+      <div class="tchip" onclick="selAmt(this,500000)" style="padding:10px 4px">500K</div>
+      <div class="tchip" onclick="selAmt(this,1000000)" style="padding:10px 4px">1M</div>
+      <div class="tchip" onclick="selAmt(this,0)" style="padding:10px 4px;font-size:10px">BOSHQA</div>
+    </div>
+    <input class="binp" id="custAmt" type="number" placeholder="Miqdor (so'm)..." style="display:none"/>
+    <button class="btn-f" onclick="copyKarta()">📋 KARTA RAQAMINI NUSXALASH</button>
+    <button class="btn-o" onclick="closeOv('topupOv')">YOPISH</button>
+  </div>
+</div>
+
+
+<!-- CHAT LIST -->
+<div class="chatlist-ov" id="chatListOv">
+  <div class="ov-hdr">
+    <div class="back" onclick="closeOv('chatListOv')">←</div>
+    <div class="ov-title">CHATLAR</div>
+  </div>
+  <div id="chatListEl"><div class="empty"><p>💬</p><p>Hozircha chatlar yo'q.<br>Ustaxona sahifasidan chat boshlang.</p></div></div>
+</div>
+
+<!-- CHAT -->
+<div class="chat-ov" id="chatOv">
+  <div class="chat-hdr">
+    <div class="back" style="width:32px;height:32px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;flex-shrink:0" onclick="closeOv('chatOv');openOv('chatListOv')">←</div>
+    <div class="chat-av" id="chatAvEl">U</div>
+    <div class="chat-info">
+      <div class="chat-info-nom" id="chatNomEl">Ustaxona</div>
+      <div class="chat-info-sub">● Online</div>
+    </div>
+  </div>
+  <div class="chat-msgs" id="chatMsgsEl"></div>
+  <div class="chat-inp-row">
+    <textarea class="chat-textarea" id="chatInpEl" rows="1" placeholder="Xabar yozing..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg()}"></textarea>
+    <button class="chat-snd-btn" onclick="sendChatMsg()">➤</button>
+  </div>
+</div>
+
+<!-- XARITA -->
+<div class="map-ov" id="mapOv">
+  <div class="map-hdr">
+    <div class="back" onclick="closeOv('mapOv')">←</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px">XARITADA USTAXONALAR</div>
+    <div style="margin-left:auto;font-size:11px;color:var(--muted2)" id="mapCnt"></div>
+  </div>
+  <iframe id="mapFrame" src="about:blank" allowfullscreen></iframe>
+  <div class="map-cards" id="mapCardsEl"></div>
+</div>
+
+<!-- USTA ARIZA BERISH -->
+<div class="ariza-ov" id="arizaOv">
+  <div class="ariza-hdr">
+    <div class="back" onclick="closeOv('arizaOv')">←</div>
+    <div class="ov-title">USTA BO'LISH ARIZASI</div>
+  </div>
+  <div class="ariza-body">
+    <div style="background:rgba(255,102,0,.08);border:1px solid rgba(255,102,0,.2);border-radius:10px;padding:12px;margin-bottom:20px;font-size:12px;color:var(--muted2);line-height:1.6">
+      ℹ️ Ariza admin tomonidan ko'rib chiqiladi. Tasdiqlangach siz usta bo'lasiz va ustaxonangiz ro'yxatga qo'shiladi.
+    </div>
+
+    <!-- RASM -->
+    <div class="ariza-img-wrap">
+      <div class="ariza-img-circle" id="arizaImgCircle" onclick="document.getElementById('arizaImgInp').click()">
+        <span id="arizaImgIcon">🏪</span>
+      </div>
+      <input type="file" id="arizaImgInp" accept="image/*" style="display:none" onchange="previewArizaImg(this)"/>
+      <div class="ariza-img-lbl">Ustaxona rasmi (bosing)</div>
+    </div>
+
+    <div class="blbl">USTAXONA NOMI *</div>
+    <input class="binp" id="arizaNomi" placeholder="Masalan: Sherzod Auto Servis"/>
+
+    <div class="blbl">MANZIL *</div>
+    <input class="binp" id="arizaManzil" placeholder="Tuman, ko'cha, uy raqami"/>
+
+    <div class="blbl">TELEFON RAQAM *</div>
+    <input class="binp" id="arizaTelefon" type="tel" placeholder="+998 90 123 45 67"/>
+
+    <div class="blbl">ISH VAQTI *</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <input class="binp" id="arizaBoshi" placeholder="08:00" style="flex:1;margin:0"/>
+      <div style="display:flex;align-items:center;color:var(--muted2);font-size:14px;padding:0 4px">—</div>
+      <input class="binp" id="arizaOxiri" placeholder="20:00" style="flex:1;margin:0"/>
+    </div>
+
+    <div class="blbl">TAJRIBA (YIL) *</div>
+    <input class="binp" id="arizaTajriba" type="number" placeholder="Masalan: 5"/>
+
+    <div class="blbl">XIZMAT TURLARI VA NARXLARI *</div>
+    <div class="xiz-add-row">
+      <input class="xiz-add-inp" id="xizNomInp" placeholder="Xizmat nomi"/>
+      <input class="xiz-add-inp" id="xizNarxInp" placeholder="Narx (so'm)" type="number" style="max-width:100px"/>
+      <button class="xiz-add-btn" onclick="addXizmat()">+</button>
+    </div>
+    <div class="xiz-list" id="xizListEl">
+      <div style="font-size:11px;color:var(--muted2)">Xizmat qo'shing...</div>
+    </div>
+
+    <div class="blbl">O'ZINGIZ HAQINGIZDA</div>
+    <textarea class="binp" id="arizaIzoh" rows="3" placeholder="Tajriba, ixtisoslik, sertifikatlar haqida yozing..." style="resize:none;height:80px"></textarea>
+
+    <div class="blbl">MINIMAL NARX (SO'M) *</div>
+    <input class="binp" id="arizaMinNarx" type="number" placeholder="Masalan: 50000"/>
+
+    <button class="btn-f" onclick="submitAriza()" style="margin-top:8px">📨 ARIZA YUBORISH</button>
+    <button class="btn-o" onclick="closeOv('arizaOv')">BEKOR QILISH</button>
+  </div>
+</div>
+<div class="toast" id="toastEl"></div>
+
+<script>
+var API="https://shamshod-production.up.railway.app";
+var SB_URL="https://zpdididueiysnzmrxdco.supabase.co";
+var SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZGlkaWR1ZWl5c256bXJ4ZGNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDAxNTAsImV4cCI6MjA5NjQxNjE1MH0.Ev1yt8wf78l8-qhdqPe2JaGItdYXufbsAX0cZ8uC94o";
+var SB_H={"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json","Prefer":"return=representation"};
+var ADMIN_PHONES=["+998778771118"];
+var KARTA="4073 4200 2335 2382";
+
+function sbGet(t,q){return fetch(SB_URL+"/rest/v1/"+t+(q||""),{headers:SB_H,mode:"cors",credentials:"omit"}).then(function(r){if(!r.ok)return[];return r.json()}).catch(function(){return[]})}
+function sbPost(t,d){return fetch(SB_URL+"/rest/v1/"+t,{method:"POST",headers:SB_H,body:JSON.stringify(d),mode:"cors",credentials:"omit"}).then(function(r){return r.json()}).catch(function(){return null})}
+function sbPatch(t,q,d){return fetch(SB_URL+"/rest/v1/"+t+q,{method:"PATCH",headers:SB_H,body:JSON.stringify(d),mode:"cors",credentials:"omit"}).catch(function(){})}
+
+var tg=window.Telegram&&window.Telegram.WebApp;
+if(tg){tg.expand();tg.setHeaderColor("#07070f");tg.setBackgroundColor("#07070f")}
+var TGU=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user;
+var allData=[],curU=null,selTime="08:00",myBrons=[],myFavs=[],selPayMethod="payme",selStars=4,selRol="",selAmount=100000;
+var EMOJIS=["🔧","🚗","⚙️","🔩","🛠️","🏎️"];
+var SLBL={1:"Yomon (1)",2:"Qoniqarsiz (2)",3:"O'rtacha (3)",4:"Yaxshi (4)",5:"A'lo (5)"};
+var ROL_NAMES={haydovchi:"🚗 HAYDOVCHI",usta:"🔧 USTA",admin:"👑 ADMIN"};
+var CU={tg_id:"",phone:"",name:"",rol:"haydovchi",balans:0};
+
+function dist(a,b,c,d){var R=6371,x=Math.sin((c-a)*Math.PI/360),y=Math.sin((d-b)*Math.PI/360);return+(R*2*Math.asin(Math.sqrt(x*x+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*y*y))).toFixed(1)}
+
+// SPLASH
+window.addEventListener("DOMContentLoaded",function(){
+  setTimeout(function(){
+    document.getElementById("splash").classList.add("hide");
+    setTimeout(function(){
+      document.getElementById("splash").style.display="none";
+      if(TGU){
+        CU.tg_id="tg_"+TGU.id;
+        CU.name=(TGU.first_name||"")+(TGU.last_name?" "+TGU.last_name:"");
+        CU.phone=TGU.username||"";
+        CU.rol="haydovchi";
+        selRol="haydovchi";
+        regUser();
+      } else {
+        var uid="";try{uid=sessionStorage.getItem("g247_uid")||""}catch(e){}
+        if(uid){
+          CU.tg_id=uid;
+          try{CU.name=sessionStorage.getItem("g247_name")||"Foydalanuvchi";CU.phone=sessionStorage.getItem("g247_phone")||"";CU.rol=sessionStorage.getItem("g247_rol")||"haydovchi";CU.balans=parseInt(sessionStorage.getItem("g247_bal")||"0")}catch(e){}
+          selRol=CU.rol;
+          showApp();
+        } else {
+          document.getElementById("regScreen").classList.add("show");
+        }
+      }
+    },500);
+  },2200);
+});
+
+// REGISTER
+function rolTanla(r){
+  selRol=r;
+  document.querySelectorAll(".rol-card").forEach(function(c){c.classList.remove("on")});
+  document.getElementById("rc-"+r).classList.add("on");
+  document.getElementById("rolErr").style.display="none";
+}
+function step1Next(){
+  if(!selRol){document.getElementById("rolErr").style.display="block";return}
+  document.getElementById("s2ico").textContent=selRol==="usta"?"🔧":"🚗";
+  document.getElementById("s2title").textContent=selRol==="usta"?"USTA":"HAYDOVCHI";
+  goStep(2);
+}
+function step2Next(){
+  var ph=document.getElementById("phoneInp").value.trim();
+  if(ph.replace(/\D/g,"").length<9){document.getElementById("phoneErr").style.display="block";return}
+  document.getElementById("phoneErr").style.display="none";
+  document.getElementById("confRol").textContent=ROL_NAMES[selRol]||selRol;
+  document.getElementById("confPhone").textContent=ph;
+  goStep(3);
+}
+function step3Finish(){
+  var ph=document.getElementById("phoneInp").value.trim();
+  CU.phone=ph;
+  CU.name=ph;
+  CU.rol=ADMIN_PHONES.includes(ph)?"admin":selRol;
+  CU.tg_id=TGU?"tg_"+TGU.id:"ph_"+ph.replace(/\D/g,"");
+  regUser();
+}
+function regUser(){
+  sbGet("foydalanuvchilar","?tg_id=eq."+encodeURIComponent(CU.tg_id)+"&select=balans,ism,rol").then(function(ex){
+    if(ex&&ex.length){
+      CU.balans=ex[0].balans||0;
+      CU.name=ex[0].ism||CU.name;
+      CU.rol=ex[0].rol||CU.rol;
+    } else {
+      sbPost("foydalanuvchilar",{tg_id:CU.tg_id,ism:CU.name,username:TGU&&TGU.username||CU.phone,balans:0,rol:CU.rol});
+      CU.balans=0;
+    }
+    showApp();
+  });
+}
+function goStep(n){
+  document.querySelectorAll(".reg-step").forEach(function(s){s.classList.remove("on")});
+  document.getElementById("step"+n).classList.add("on");
+  document.querySelectorAll(".sdot").forEach(function(d,i){d.classList.toggle("on",i<n)});
+}
+function fmtPhone(inp){
+  var v=inp.value.replace(/\D/g,"");
+  if(v.length>0&&!v.startsWith("998"))v="998"+v;
+  inp.value="+"+v.substring(0,12);
+}
+
+// SHOW APP
+function showApp(){
+  try{sessionStorage.setItem("g247_uid",CU.tg_id);sessionStorage.setItem("g247_name",CU.name);sessionStorage.setItem("g247_phone",CU.phone);sessionStorage.setItem("g247_rol",CU.rol);sessionStorage.setItem("g247_bal",String(CU.balans))}catch(e){}
+  document.getElementById("regScreen").classList.remove("show");
+  document.getElementById("appShell").style.display="flex";
+  var ini=(CU.name||"G")[0].toUpperCase();
+  document.getElementById("avEl").textContent=ini;
+  document.getElementById("profAv").textContent=ini;
+  document.getElementById("profName").textContent=CU.name||"Foydalanuvchi";
+  document.getElementById("profSub").textContent=CU.phone||"Garage 24/7 a'zosi";
+  var rolEl=document.getElementById("profRol");
+  rolEl.textContent=ROL_NAMES[CU.rol]||"👤 FOYDALANUVCHI";
+  rolEl.className="prof-rol "+(CU.rol||"haydovchi")+"-rol";
+  checkUstaBtn();
+  updateBalEl();
+  document.getElementById("topupCode").textContent="G247-"+CU.tg_id.substring(0,8);
+  var pn=document.getElementById("pn-panel");
+  if(CU.rol==="admin")pn.textContent="👑 ADMIN";
+  else if(CU.rol==="usta")pn.textContent="🔧 PANEL";
+  else pn.textContent="PANEL";
+  loadData();
+  loadStats();
+}
+function updateBalEl(){
+  var b=CU.balans||0;
+  document.getElementById("pBal").textContent=CU.rol==="haydovchi"?"—":(b>0?Math.round(b/1000)+"K":"0");
+}
+function chiqish(){if(!confirm("Chiqmoqchimisiz?"))return;try{sessionStorage.clear()}catch(e){}location.reload()}
+
+// DATA
+function loadData(lat,lng){
+  lat=lat||41.2995;lng=lng||69.2401;
+  document.getElementById("listEl").innerHTML='<div class="spin-wrap"><div class="spin"></div><p style="color:var(--muted2);font-size:12px">Yuklanmoqda...</p></div>';
+  fetch(API+"/ustaxonalar?lat="+lat+"&lng="+lng,{signal:AbortSignal.timeout(6000)})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(Array.isArray(d)&&d.length){
+        allData=d.map(function(u){return Object.assign({},u,{xizmatlar:u.xizmatlar_list||u.xizmatlar||[],narxlar:u.narxlar||{},masofa_km:u.masofa_km||0})});
+        renderCards(allData);
+      } else { loadFromSB(lat,lng); }
+    }).catch(function(){loadFromSB(lat,lng);});
+}
+function loadFromSB(lat,lng){
+  sbGet("ustaxonalar","?select=*,xizmatlar(nomi,narx)&order=id").then(function(d2){
+    if(Array.isArray(d2)&&d2.length){allData=d2.map(function(u){var xz=u.xizmatlar||[];return Object.assign({},u,{xizmatlar:xz.map(function(x){return x.nomi}),narxlar:Object.fromEntries(xz.map(function(x){return[x.nomi,x.narx]})),masofa_km:dist(lat||41.2995,lng||69.2401,u.lat||41.2995,u.lng||69.2401)})})}
+    else{allData=demo()}
+    renderCards(allData);
+  }).catch(function(){allData=demo();renderCards(allData)});
+}
+function demo(){return[];}
+function submitSharh(){
+  var m=document.getElementById("sharhMatn").value.trim();
+  if(!m){toast("⚠️ SHARH MATNINI KIRITING");return}
+  sbPost("sharhlar",{ustaxona_id:curU.id,foydalanuvchi_id:CU.tg_id,yulduz:selStars,matn:m}).then(function(){
+    sbGet("sharhlar","?ustaxona_id=eq."+curU.id+"&select=yulduz").then(function(sh){
+      if(sh&&sh.length){var avg=(sh.reduce(function(a,s){return a+s.yulduz},0)/sh.length).toFixed(1);sbPatch("ustaxonalar","?id=eq."+curU.id,{reyting:parseFloat(avg),sharhlar_soni:sh.length})}
+    });
+  });
+  closeOv("sharhOv");toast("⭐ SHARH YUBORILDI! ("+selStars+" yulduz)");
+}
+
+// PANEL
+function showPanelByRol(){
+  document.getElementById("adminPanel").style.display=CU.rol==="admin"?"block":"none";
+  document.getElementById("ustaPanel").style.display=CU.rol==="usta"?"block":"none";
+  document.getElementById("haydovchiPanel").style.display=CU.rol==="haydovchi"?"block":"none";
+  if(CU.rol==="admin"||CU.rol==="usta"){
+    sbGet("bronlar","?select=*&order=created_at.desc&limit=10").then(function(bronlar){
+      if(!bronlar||!bronlar.length)return;
+      var elId=CU.rol==="admin"?"adminBronEl":"ustaBronEl";
+      var el=document.getElementById(elId);if(!el)return;
+      el.innerHTML=bronlar.map(function(b){
+        return'<div class="pbron"><div class="pb-name">'+b.foydalanuvchi_id+(b.avto?" — "+b.avto:"")+'</div>'+
+          '<div class="pb-info">🔧 '+b.xizmat+' · ⏰ '+b.sana+' '+b.vaqt+' · '+b.narx.toLocaleString()+' so\'m</div>'+
+          '<div class="pb-btns"><button class="pb-acc" onclick="pbAcc(this)">✓ QABUL</button><button class="pb-rej" onclick="pbRej(this)">✗ RAD</button></div></div>';
+      }).join("");
+    }).catch(function(){});
+  }
+}
+function pbAcc(btn){btn.closest(".pbron").querySelector(".pb-btns").innerHTML='<span style="color:var(--green);font-size:12px;font-weight:800">✓ QABUL QILINDI</span>';toast("✅ BRON QABUL QILINDI")}
+function pbRej(btn){var b=btn.closest(".pbron");b.style.opacity=".3";b.style.pointerEvents="none";toast("✗ BRON RAD ETILDI")}
+
+// PROFIL
+function showRef(){
+  var link="https://t.me/shamashod_kotbot?start="+CU.tg_id;
+  try{navigator.clipboard.writeText(link)}catch{}
+  toast("📋 Referral havola nusxalandi!");
+}
+function selAmt(el,amt){
+  document.querySelectorAll(".amt-grid .tchip").forEach(function(c){c.classList.remove("on")});
+  el.classList.add("on");selAmount=amt;
+  document.getElementById("custAmt").style.display=amt===0?"block":"none";
+}
+function copyKarta(){
+  try{navigator.clipboard.writeText("4073420023352382")}catch{}
+  toast("📋 Karta raqami nusxalandi: "+KARTA);
+}
+
+// HELPERS
+function call(tel){window.open("tel:"+tel)}
+function maps(m){window.open("https://maps.google.com/?q="+encodeURIComponent(m))}
+function doGps(){
+  if(!navigator.geolocation){toast("📍 GPS MAVJUD EMAS");return}
+  toast("📍 ANIQLANMOQDA...");
+  navigator.geolocation.getCurrentPosition(function(p){loadData(p.coords.latitude,p.coords.longitude)},function(){toast("❌ GPS RUXSATI YO'Q")});
+}
+function doSearch(){
+  var q=document.getElementById("srchEl").value.toLowerCase();
+  if(!q){renderCards(allData);return}
+  renderCards(allData.filter(function(u){return u.nomi.toLowerCase().includes(q)||u.manzil.toLowerCase().includes(q)||u.xizmatlar.some(function(x){return x.toLowerCase().includes(q)})}));
+}
+function fTab(el,t){
+  document.querySelectorAll(".tab").forEach(function(x){x.classList.remove("on")});
+  el.classList.add("on");
+  renderCards(t==="all"?allData:allData.filter(function(u){return u.xizmatlar.some(function(x){return x.includes(t)})}));
+}
+function goPage(p){
+  document.querySelectorAll(".page").forEach(function(x){x.classList.remove("on")});
+  document.querySelectorAll(".bi").forEach(function(x){x.classList.remove("on")});
+  document.querySelectorAll(".pnav-btn").forEach(function(x){x.classList.remove("on")});
+  var pg=document.getElementById("pg-"+p);if(pg)pg.classList.add("on");
+  var bn=document.getElementById("bn-"+p);if(bn)bn.classList.add("on");
+  var pn=document.getElementById("pn-"+p);if(pn)pn.classList.add("on");
+  if(p==="bronlarim")renderBrons();
+  if(p==="sevimlilar")renderFavs();
+  if(p==="notif")document.getElementById("ndot").style.display="none";
+  if(p==="panel")showPanelByRol();
+}
+function openOv(id){document.getElementById(id).classList.add("on")}
+function closeOv(id){document.getElementById(id).classList.remove("on")}
+
+// ═══════════════════════════════════════
+// CHAT TIZIMI
+// ═══════════════════════════════════════
+var chatDB={};
+var curChatId=null,curChatNom="";
+
+function openChatWith(id,nom){
+  curChatId=String(id);
+  curChatNom=nom||"Ustaxona";
+  if(!chatDB[curChatId])chatDB[curChatId]=[];
+  document.getElementById("chatNomEl").textContent=curChatNom;
+  document.getElementById("chatAvEl").textContent=(curChatNom||"U")[0].toUpperCase();
+  renderChatMsgs();
+  openOv("chatOv");
+  setTimeout(function(){
+    var el=document.getElementById("chatMsgsEl");
+    if(el)el.scrollTop=el.scrollHeight;
+  },100);
+  if(!chatDB[curChatId].length){
+    setTimeout(function(){
+      addChatMsg("them","Salom! "+curChatNom+" ustaxonasiga xush kelibsiz. Qanday yordam beray? 🔧");
+    },800);
+  }
+}
+
+function renderChatMsgs(){
+  var el=document.getElementById("chatMsgsEl");
+  if(!el)return;
+  var msgs=chatDB[curChatId]||[];
+  if(!msgs.length){
+    el.innerHTML='<div class="empty"><p>💬</p><p>Xabar yozing!</p></div>';
+    return;
+  }
+  el.innerHTML=msgs.map(function(m){
+    return'<div class="cmsg '+m.from+'"><div class="cmsg-bbl">'+m.text+'</div><div class="cmsg-t">'+m.time+'</div></div>';
+  }).join("");
+  setTimeout(function(){el.scrollTop=el.scrollHeight},30);
+}
+
+function addChatMsg(from,text){
+  if(!chatDB[curChatId])chatDB[curChatId]=[];
+  var now=new Date();
+  chatDB[curChatId].push({
+    from:from,
+    text:text,
+    time:now.getHours()+":"+(now.getMinutes()<10?"0":"")+now.getMinutes()
+  });
+  renderChatMsgs();
+}
+
+function sendChatMsg(){
+  var inp=document.getElementById("chatInpEl");
+  var txt=(inp.value||"").trim();
+  if(!txt||!curChatId)return;
+  addChatMsg("me",txt);
+  inp.value="";
+  document.getElementById("ndot").style.display="block";
+  var replies=[
+    "Albatta yordam beramiz!",
+    "Tushundik, tez orada ko'rib chiqamiz.",
+    "Sana va vaqtni ayting, joy band qilamiz.",
+    "Ha, bu xizmat bizda bor. Bron qiling!",
+    "Narx haqida ma'lumot: profilimizda ko'rsatilgan.",
+    "Bugun uchun joy bor. Bron qiling!"
+  ];
+  setTimeout(function(){
+    addChatMsg("them",replies[Math.floor(Math.random()*replies.length)]);
+  },700+Math.random()*1200);
+}
+
+function renderChatList(){
+  var el=document.getElementById("chatListEl");
+  if(!el)return;
+  var keys=Object.keys(chatDB).filter(function(k){return chatDB[k]&&chatDB[k].length});
+  if(!keys.length){el.innerHTML='<div class="empty"><p>💬</p><p>Hozircha chatlar yo\'q.</p></div>';return}
+  var rows="";
+  keys.forEach(function(k){
+    var msgs=chatDB[k];
+    var last=msgs[msgs.length-1];
+    var ust=allData.find(function(u){return String(u.id)===k});
+    var nom=ust?ust.nomi:"Ustaxona";
+    var div=document.createElement("div");
+    div.className="cli-item";
+    div.innerHTML='<div class="cli-av">'+nom[0].toUpperCase()+'</div>'+
+      '<div class="cli-info"><div class="cli-nom">'+nom+'</div>'+
+      '<div class="cli-last">'+(last.from==="me"?"Siz: ":"")+last.text+'</div></div>'+
+      '<div class="cli-time">'+last.time+'</div>';
+    div.onclick=(function(id,n){return function(){openChatWith(id,n)}})(k,nom);
+    el.appendChild(div);
+  });
+}
+
+function sbGet(t,q){return fetch(SB_URL+"/rest/v1/"+t+(q||""),{headers:SB_H,mode:"cors",credentials:"omit"}).then(function(r){if(!r.ok)return[];return r.json()}).catch(function(){return[]})}
+function sbPost(t,d){return fetch(SB_URL+"/rest/v1/"+t,{method:"POST",headers:SB_H,body:JSON.stringify(d),mode:"cors",credentials:"omit"}).then(function(r){return r.json()}).catch(function(){return null})}
+function sbPatch(t,q,d){return fetch(SB_URL+"/rest/v1/"+t+q,{method:"PATCH",headers:SB_H,body:JSON.stringify(d),mode:"cors",credentials:"omit"}).catch(function(){})}
+
+var tg=window.Telegram&&window.Telegram.WebApp;
+if(tg){tg.expand();tg.setHeaderColor("#07070f");tg.setBackgroundColor("#07070f")}
+var TGU=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user;
+var allData=[],curU=null,selTime="08:00",myBrons=[],myFavs=[],selPayMethod="payme",selStars=4,selRol="",selAmount=100000;
+var EMOJIS=["🔧","🚗","⚙️","🔩","🛠️","🏎️"];
+var SLBL={1:"Yomon (1)",2:"Qoniqarsiz (2)",3:"O'rtacha (3)",4:"Yaxshi (4)",5:"A'lo (5)"};
+var ROL_NAMES={haydovchi:"🚗 HAYDOVCHI",usta:"🔧 USTA",admin:"👑 ADMIN"};
+var CU={tg_id:"",phone:"",name:"",rol:"haydovchi",balans:0};
+
+function dist(a,b,c,d){var R=6371,x=Math.sin((c-a)*Math.PI/360),y=Math.sin((d-b)*Math.PI/360);return+(R*2*Math.asin(Math.sqrt(x*x+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*y*y))).toFixed(1)}
+
+// SPLASH
+window.addEventListener("DOMContentLoaded",function(){
+  setTimeout(function(){
+    document.getElementById("splash").classList.add("hide");
+    setTimeout(function(){
+      document.getElementById("splash").style.display="none";
+      if(TGU){
+        CU.tg_id="tg_"+TGU.id;
+        CU.name=(TGU.first_name||"")+(TGU.last_name?" "+TGU.last_name:"");
+        CU.phone=TGU.username||"";
+        CU.rol="haydovchi";
+        selRol="haydovchi";
+        regUser();
+      } else {
+        var uid="";try{uid=sessionStorage.getItem("g247_uid")||""}catch(e){}
+        if(uid){
+          CU.tg_id=uid;
+          try{CU.name=sessionStorage.getItem("g247_name")||"Foydalanuvchi";CU.phone=sessionStorage.getItem("g247_phone")||"";CU.rol=sessionStorage.getItem("g247_rol")||"haydovchi";CU.balans=parseInt(sessionStorage.getItem("g247_bal")||"0")}catch(e){}
+          selRol=CU.rol;
+          showApp();
+        } else {
+          document.getElementById("regScreen").classList.add("show");
+        }
+      }
+    },500);
+  },2200);
+});
+
+// REGISTER
+function rolTanla(r){
+  selRol=r;
+  document.querySelectorAll(".rol-card").forEach(function(c){c.classList.remove("on")});
+  document.getElementById("rc-"+r).classList.add("on");
+  document.getElementById("rolErr").style.display="none";
+}
+function step1Next(){
+  if(!selRol){document.getElementById("rolErr").style.display="block";return}
+  document.getElementById("s2ico").textContent=selRol==="usta"?"🔧":"🚗";
+  document.getElementById("s2title").textContent=selRol==="usta"?"USTA":"HAYDOVCHI";
+  goStep(2);
+}
+function step2Next(){
+  var ph=document.getElementById("phoneInp").value.trim();
+  if(ph.replace(/\D/g,"").length<9){document.getElementById("phoneErr").style.display="block";return}
+  document.getElementById("phoneErr").style.display="none";
+  document.getElementById("confRol").textContent=ROL_NAMES[selRol]||selRol;
+  document.getElementById("confPhone").textContent=ph;
+  goStep(3);
+}
+function step3Finish(){
+  var ph=document.getElementById("phoneInp").value.trim();
+  CU.phone=ph;
+  CU.name=ph;
+  CU.rol=ADMIN_PHONES.includes(ph)?"admin":selRol;
+  CU.tg_id=TGU?"tg_"+TGU.id:"ph_"+ph.replace(/\D/g,"");
+  regUser();
+}
+function regUser(){
+  sbGet("foydalanuvchilar","?tg_id=eq."+encodeURIComponent(CU.tg_id)+"&select=balans,ism,rol").then(function(ex){
+    if(ex&&ex.length){
+      CU.balans=ex[0].balans||0;
+      CU.name=ex[0].ism||CU.name;
+      CU.rol=ex[0].rol||CU.rol;
+    } else {
+      sbPost("foydalanuvchilar",{tg_id:CU.tg_id,ism:CU.name,username:TGU&&TGU.username||CU.phone,balans:0,rol:CU.rol});
+      CU.balans=0;
+    }
+    showApp();
+  });
+}
+function goStep(n){
+  document.querySelectorAll(".reg-step").forEach(function(s){s.classList.remove("on")});
+  document.getElementById("step"+n).classList.add("on");
+  document.querySelectorAll(".sdot").forEach(function(d,i){d.classList.toggle("on",i<n)});
+}
+function fmtPhone(inp){
+  var v=inp.value.replace(/\D/g,"");
+  if(v.length>0&&!v.startsWith("998"))v="998"+v;
+  inp.value="+"+v.substring(0,12);
+}
+
+// SHOW APP
+function showApp(){
+  try{sessionStorage.setItem("g247_uid",CU.tg_id);sessionStorage.setItem("g247_name",CU.name);sessionStorage.setItem("g247_phone",CU.phone);sessionStorage.setItem("g247_rol",CU.rol);sessionStorage.setItem("g247_bal",String(CU.balans))}catch(e){}
+  document.getElementById("regScreen").classList.remove("show");
+  document.getElementById("appShell").style.display="flex";
+  var ini=(CU.name||"G")[0].toUpperCase();
+  document.getElementById("avEl").textContent=ini;
+  document.getElementById("profAv").textContent=ini;
+  document.getElementById("profName").textContent=CU.name||"Foydalanuvchi";
+  document.getElementById("profSub").textContent=CU.phone||"Garage 24/7 a'zosi";
+  var rolEl=document.getElementById("profRol");
+  rolEl.textContent=ROL_NAMES[CU.rol]||"👤 FOYDALANUVCHI";
+  rolEl.className="prof-rol "+(CU.rol||"haydovchi")+"-rol";
+  checkUstaBtn();
+  updateBalEl();
+  document.getElementById("topupCode").textContent="G247-"+CU.tg_id.substring(0,8);
+  var pn=document.getElementById("pn-panel");
+  if(CU.rol==="admin")pn.textContent="👑 ADMIN";
+  else if(CU.rol==="usta")pn.textContent="🔧 PANEL";
+  else pn.textContent="PANEL";
+  loadData();
+  loadStats();
+}
+function updateBalEl(){
+  var b=CU.balans||0;
+  document.getElementById("pBal").textContent=CU.rol==="haydovchi"?"—":(b>0?Math.round(b/1000)+"K":"0");
+}
+function chiqish(){if(!confirm("Chiqmoqchimisiz?"))return;try{sessionStorage.clear()}catch(e){}location.reload()}
+
+// DATA
+function loadData(lat,lng){
+  lat=lat||41.2995;lng=lng||69.2401;
+  document.getElementById("listEl").innerHTML='<div class="spin-wrap"><div class="spin"></div><p style="color:var(--muted2);font-size:12px">Yuklanmoqda...</p></div>';
+  fetch(API+"/ustaxonalar?lat="+lat+"&lng="+lng,{signal:AbortSignal.timeout(6000)})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(Array.isArray(d)&&d.length){
+        allData=d.map(function(u){return Object.assign({},u,{xizmatlar:u.xizmatlar_list||u.xizmatlar||[],narxlar:u.narxlar||{},masofa_km:u.masofa_km||0})});
+        renderCards(allData);
+      } else { loadFromSB(lat,lng); }
+    }).catch(function(){loadFromSB(lat,lng);});
+}
+function loadFromSB(lat,lng){
+  sbGet("ustaxonalar","?select=*,xizmatlar(nomi,narx)&order=id").then(function(d2){
+    if(Array.isArray(d2)&&d2.length){allData=d2.map(function(u){var xz=u.xizmatlar||[];return Object.assign({},u,{xizmatlar:xz.map(function(x){return x.nomi}),narxlar:Object.fromEntries(xz.map(function(x){return[x.nomi,x.narx]})),masofa_km:dist(lat||41.2995,lng||69.2401,u.lat||41.2995,u.lng||69.2401)})})}
+    else{allData=demo()}
+    renderCards(allData);
+  }).catch(function(){allData=demo();renderCards(allData)});
+}
+function demo(){return[];}
+function submitSharh(){
+  var m=document.getElementById("sharhMatn").value.trim();
+  if(!m){toast("⚠️ SHARH MATNINI KIRITING");return}
+  sbPost("sharhlar",{ustaxona_id:curU.id,foydalanuvchi_id:CU.tg_id,yulduz:selStars,matn:m}).then(function(){
+    sbGet("sharhlar","?ustaxona_id=eq."+curU.id+"&select=yulduz").then(function(sh){
+      if(sh&&sh.length){var avg=(sh.reduce(function(a,s){return a+s.yulduz},0)/sh.length).toFixed(1);sbPatch("ustaxonalar","?id=eq."+curU.id,{reyting:parseFloat(avg),sharhlar_soni:sh.length})}
+    });
+  });
+  closeOv("sharhOv");toast("⭐ SHARH YUBORILDI! ("+selStars+" yulduz)");
+}
+
+// PANEL
+function showPanelByRol(){
+  document.getElementById("adminPanel").style.display=CU.rol==="admin"?"block":"none";
+  document.getElementById("ustaPanel").style.display=CU.rol==="usta"?"block":"none";
+  document.getElementById("haydovchiPanel").style.display=CU.rol==="haydovchi"?"block":"none";
+  if(CU.rol==="admin"||CU.rol==="usta"){
+    sbGet("bronlar","?select=*&order=created_at.desc&limit=10").then(function(bronlar){
+      if(!bronlar||!bronlar.length)return;
+      var elId=CU.rol==="admin"?"adminBronEl":"ustaBronEl";
+      var el=document.getElementById(elId);if(!el)return;
+      el.innerHTML=bronlar.map(function(b){
+        return'<div class="pbron"><div class="pb-name">'+b.foydalanuvchi_id+(b.avto?" — "+b.avto:"")+'</div>'+
+          '<div class="pb-info">🔧 '+b.xizmat+' · ⏰ '+b.sana+' '+b.vaqt+' · '+b.narx.toLocaleString()+' so\'m</div>'+
+          '<div class="pb-btns"><button class="pb-acc" onclick="pbAcc(this)">✓ QABUL</button><button class="pb-rej" onclick="pbRej(this)">✗ RAD</button></div></div>';
+      }).join("");
+    }).catch(function(){});
+  }
+}
+function pbAcc(btn){btn.closest(".pbron").querySelector(".pb-btns").innerHTML='<span style="color:var(--green);font-size:12px;font-weight:800">✓ QABUL QILINDI</span>';toast("✅ BRON QABUL QILINDI")}
+function pbRej(btn){var b=btn.closest(".pbron");b.style.opacity=".3";b.style.pointerEvents="none";toast("✗ BRON RAD ETILDI")}
+
+// PROFIL
+function showRef(){
+  var link="https://t.me/shamashod_kotbot?start="+CU.tg_id;
+  try{navigator.clipboard.writeText(link)}catch{}
+  toast("📋 Referral havola nusxalandi!");
+}
+function selAmt(el,amt){
+  document.querySelectorAll(".amt-grid .tchip").forEach(function(c){c.classList.remove("on")});
+  el.classList.add("on");selAmount=amt;
+  document.getElementById("custAmt").style.display=amt===0?"block":"none";
+}
+function copyKarta(){
+  try{navigator.clipboard.writeText("4073420023352382")}catch{}
+  toast("📋 Karta raqami nusxalandi: "+KARTA);
+}
+
+// HELPERS
+function call(tel){window.open("tel:"+tel)}
+function maps(m){window.open("https://maps.google.com/?q="+encodeURIComponent(m))}
+function doGps(){
+  if(!navigator.geolocation){toast("📍 GPS MAVJUD EMAS");return}
+  toast("📍 ANIQLANMOQDA...");
+  navigator.geolocation.getCurrentPosition(function(p){loadData(p.coords.latitude,p.coords.longitude)},function(){toast("❌ GPS RUXSATI YO'Q")});
+}
+function doSearch(){
+  var q=document.getElementById("srchEl").value.toLowerCase();
+  if(!q){renderCards(allData);return}
+  renderCards(allData.filter(function(u){return u.nomi.toLowerCase().includes(q)||u.manzil.toLowerCase().includes(q)||u.xizmatlar.some(function(x){return x.toLowerCase().includes(q)})}));
+}
+function fTab(el,t){
+  document.querySelectorAll(".tab").forEach(function(x){x.classList.remove("on")});
+  el.classList.add("on");
+  renderCards(t==="all"?allData:allData.filter(function(u){return u.xizmatlar.some(function(x){return x.includes(t)})}));
+}
+function goPage(p){
+  document.querySelectorAll(".page").forEach(function(x){x.classList.remove("on")});
+  document.querySelectorAll(".bi").forEach(function(x){x.classList.remove("on")});
+  document.querySelectorAll(".pnav-btn").forEach(function(x){x.classList.remove("on")});
+  var pg=document.getElementById("pg-"+p);if(pg)pg.classList.add("on");
+  var bn=document.getElementById("bn-"+p);if(bn)bn.classList.add("on");
+  var pn=document.getElementById("pn-"+p);if(pn)pn.classList.add("on");
+  if(p==="bronlarim")renderBrons();
+  if(p==="sevimlilar")renderFavs();
+  if(p==="notif")document.getElementById("ndot").style.display="none";
+  if(p==="panel")showPanelByRol();
+}
+function openOv(id){document.getElementById(id).classList.add("on")}
+function closeOv(id){document.getElementById(id).classList.remove("on")}
+
+// ═══════════════════════════════════════
+// CHAT TIZIMI
+// ═══════════════════════════════════════
+var chatDB={};
+var curChatId=null,curChatNom="";
+
+function openChatWith(id,nom){
+  curChatId=String(id);
+  curChatNom=nom||"Ustaxona";
+  if(!chatDB[curChatId])chatDB[curChatId]=[];
+  document.getElementById("chatNomEl").textContent=curChatNom;
+  document.getElementById("chatAvEl").textContent=(curChatNom||"U")[0].toUpperCase();
+  renderChatMsgs();
+  openOv("chatOv");
+  setTimeout(function(){
+    var el=document.getElementById("chatMsgsEl");
+    if(el)el.scrollTop=el.scrollHeight;
+  },100);
+  if(!chatDB[curChatId].length){
+    setTimeout(function(){
+      addChatMsg("them","Salom! "+curChatNom+" ustaxonasiga xush kelibsiz. Qanday yordam beray? 🔧");
+    },800);
+  }
+}
+
+function renderChatMsgs(){
+  var el=document.getElementById("chatMsgsEl");
+  if(!el)return;
+  var msgs=chatDB[curChatId]||[];
+  if(!msgs.length){
+    el.innerHTML='<div class="empty"><p>💬</p><p>Xabar yozing!</p></div>';
+    return;
+  }
+  el.innerHTML=msgs.map(function(m){
+    return'<div class="cmsg '+m.from+'"><div class="cmsg-bbl">'+m.text+'</div><div class="cmsg-t">'+m.time+'</div></div>';
+  }).join("");
+  setTimeout(function(){el.scrollTop=el.scrollHeight},30);
+}
+
+function addChatMsg(from,text){
+  if(!chatDB[curChatId])chatDB[curChatId]=[];
+  var now=new Date();
+  chatDB[curChatId].push({
+    from:from,
+    text:text,
+    time:now.getHours()+":"+(now.getMinutes()<10?"0":"")+now.getMinutes()
+  });
+  renderChatMsgs();
+}
+
+function sendChatMsg(){
+  var inp=document.getElementById("chatInpEl");
+  var txt=(inp.value||"").trim();
+  if(!txt||!curChatId)return;
+  addChatMsg("me",txt);
+  inp.value="";
+  document.getElementById("ndot").style.display="block";
+  var replies=[
+    "Albatta yordam beramiz!",
+    "Tushundik, tez orada ko'rib chiqamiz.",
+    "Sana va vaqtni ayting, joy band qilamiz.",
+    "Ha, bu xizmat bizda bor. Bron qiling!",
+    "Narx haqida ma'lumot: profilimizda ko'rsatilgan.",
+    "Bugun uchun joy bor. Bron qiling!"
+  ];
+  setTimeout(function(){
+    addChatMsg("them",replies[Math.floor(Math.random()*replies.length)]);
+  },700+Math.random()*1200);
+}
+
+
+function bekorBron(i){
+  if(!confirm("Bronni bekor qilmoqchimisiz?"))return;
+  myBrons[i].bekor=true;
+  renderBrons();
+  document.getElementById("pBron").textContent=myBrons.filter(function(b){return!b.bekor}).length;
+  toast("✕ BRON BEKOR QILINDI");
+}
+
+
+// ═══════════════════════════════════════
+// XARITA (Yandex Maps — API keysiz)
+// ═══════════════════════════════════════
+function openMapOv(){
+  var frame = document.getElementById("mapFrame");
+  var cards = document.getElementById("mapCardsEl");
+  var cnt   = document.getElementById("mapCnt");
+  if(!allData||!allData.length){toast("⚠️ Avval ustaxonalarni yuklang");return}
+
+  // Markazni hisoblash
+  var lats = allData.map(function(u){return u.lat||41.2995});
+  var lngs = allData.map(function(u){return u.lng||69.2401});
+  var clat = lats.reduce(function(a,b){return a+b},0)/lats.length;
+  var clng = lngs.reduce(function(a,b){return a+b},0)/lngs.length;
+
+  // Yandex Maps pinlar
+  var pts = allData.slice(0,15).map(function(u){
+    return (u.lng||69.2401)+","+(u.lat||41.2995)+",pm2rdm";
+  }).join("~");
+
+  frame.src = "https://yandex.uz/maps/?ll="+clng+","+clat+"&z=12&l=map&pt="+pts+"&lang=uz_UZ";
+
+  // Quyidagi kartochkalar
+  cnt.textContent = allData.length+" ta ustaxona";
+  cards.innerHTML = allData.slice(0,15).map(function(u){
+    var km = u.masofa_km||"?";
+    var ochiq = u.ochiq ? '<span style="color:var(--green)">● Ochiq</span>' : '<span style="color:var(--red)">● Yopiq</span>';
+    return '<div class="map-card" data-uid="'+u.id+'" onclick="var el=this;closeOv(\'mapOv\');openDetail(parseInt(el.getAttribute(\'data-uid\')))">'+
+      '<div class="map-card-nom">'+u.nomi+'</div>'+
+      '<div class="map-card-meta">'+ochiq+' · ★'+u.reyting+' · '+km+'km</div>'+
+      '<button class="map-card-btn">BRON →</button>'+
+    '</div>';
+  }).join("");
+
+  openOv("mapOv");
+}
+
+// ═══════════════════════════════════════
+// USTA ARIZA TIZIMI
+// ═══════════════════════════════════════
+var arizaXizmatlar = [];
+var arizaImgData = null;
+
+function openArizaOv(){
+  arizaXizmatlar = [];
+  arizaImgData = null;
+  document.getElementById('arizaNomi').value = '';
+  document.getElementById('arizaManzil').value = '';
+  document.getElementById('arizaTelefon').value = CU.phone||'';
+  document.getElementById('arizaBoshi').value = '08:00';
+  document.getElementById('arizaOxiri').value = '20:00';
+  document.getElementById('arizaTajriba').value = '';
+  document.getElementById('arizaIzoh').value = '';
+  document.getElementById('arizaMinNarx').value = '';
+  document.getElementById('xizNomInp').value = '';
+  document.getElementById('xizNarxInp').value = '';
+  document.getElementById('xizListEl').innerHTML = '<div style="font-size:11px;color:var(--muted2)">Xizmat qo\'shing...</div>';
+  document.getElementById('arizaImgCircle').innerHTML = '<span id="arizaImgIcon">🏪</span>';
+  openOv('arizaOv');
+}
+
+function previewArizaImg(inp){
+  var file = inp.files[0]; if(!file) return;
+  if(file.size > 3*1024*1024){ toast("⚠️ RASM 3MB DAN KAM BO'LSIN"); return; }
+  var r = new FileReader();
+  r.onload = function(e){
+    arizaImgData = e.target.result;
+    document.getElementById('arizaImgCircle').innerHTML = '<img src="'+e.target.result+'" style="width:90px;height:90px;object-fit:cover;border-radius:12px"/>';
+  };
+  r.readAsDataURL(file);
+}
+
+function addXizmat(){
+  var nom = document.getElementById('xizNomInp').value.trim();
+  var narx = parseInt(document.getElementById('xizNarxInp').value)||0;
+  if(!nom){ toast("⚠️ XIZMAT NOMINI KIRITING"); return; }
+  if(!narx){ toast("⚠️ NARXNI KIRITING"); return; }
+  arizaXizmatlar.push({nomi:nom, narx:narx});
+  document.getElementById('xizNomInp').value = '';
+  document.getElementById('xizNarxInp').value = '';
+  renderArizaXizmatlar();
+}
+
+function renderArizaXizmatlar(){
+  var el = document.getElementById('xizListEl');
+  if(!arizaXizmatlar.length){
+    el.innerHTML = '<div style="font-size:11px;color:var(--muted2)">Xizmat qo\'shing...</div>';
+    return;
+  }
+  el.innerHTML = arizaXizmatlar.map(function(x,i){
+    return '<div class="xiz-tag">'+x.nomi+' — '+x.narx.toLocaleString()+" so'm"+
+      '<span class="xiz-tag-del" onclick="removeXizmat('+i+')">×</span></div>';
+  }).join('');
+}
+
+function removeXizmat(i){
+  arizaXizmatlar.splice(i,1);
+  renderArizaXizmatlar();
+}
+
+function submitAriza(){
+  var nom = document.getElementById('arizaNomi').value.trim();
+  var manzil = document.getElementById('arizaManzil').value.trim();
+  var tel = document.getElementById('arizaTelefon').value.trim();
+  var boshi = document.getElementById('arizaBoshi').value.trim();
+  var oxiri = document.getElementById('arizaOxiri').value.trim();
+  var tajriba = document.getElementById('arizaTajriba').value.trim();
+  var izoh = document.getElementById('arizaIzoh').value.trim();
+  var minNarx = parseInt(document.getElementById('arizaMinNarx').value)||50000;
+
+  if(!nom){ toast("⚠️ USTAXONA NOMINI KIRITING"); return; }
+  if(!manzil){ toast("⚠️ MANZILNI KIRITING"); return; }
+  if(!tel){ toast("⚠️ TELEFONNI KIRITING"); return; }
+  if(!tajriba){ toast("⚠️ TAJRIBANI KIRITING"); return; }
+  if(!arizaXizmatlar.length){ toast("⚠️ KAMIDA 1 XIZMAT QOSHING"); return; }
+
+  var btn = document.querySelector('#arizaOv .btn-f');
+  btn.textContent = "⏳ YUBORILMOQDA...";
+  btn.disabled = true;
+
+  var data = {
+    tg_id: CU.tg_id,
+    ism: CU.name,
+    ustaxona_nomi: nom,
+    manzil: manzil,
+    telefon: tel,
+    ish_vaqti: boshi+"-"+oxiri,
+    tajriba: parseInt(tajriba)||0,
+    xizmatlar: JSON.stringify(arizaXizmatlar),
+    izoh: izoh,
+    min_narx: minNarx,
+    rasm: arizaImgData||"",
+    holat: "kutilmoqda",
+    created_at: new Date().toISOString()
+  };
+
+  sbPost("usta_arizalar", data).then(function(res){
+    btn.textContent = "📨 ARIZA YUBORISH";
+    btn.disabled = false;
+    closeOv('arizaOv');
+    toast("✅ ARIZA YUBORILDI! Admin ko'rib chiqadi.");
+  }).catch(function(){
+    btn.textContent = "📨 ARIZA YUBORISH";
+    btn.disabled = false;
+    toast("❌ XATO. Qaytadan urinib ko'ring.");
+  });
+}
+
+// Profil sahifasida "Usta bo'lish" tugmasini ko'rsatish
+function checkUstaBtn(){
+  var btn = document.getElementById('ustaBtn');
+  if(btn) btn.style.display = CU.rol === 'haydovchi' ? 'flex' : 'none';
+}
+
+function toast(msg){var el=document.getElementById("toastEl");el.textContent=msg;el.classList.add("on");setTimeout(function(){el.classList.remove("on")},2600)}
+</script>
+</body>
+</html>
